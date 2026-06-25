@@ -1,459 +1,303 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
+import { useTheme } from '@/contexts/ThemeContext';
+import { ChevronDown, ChevronUp, Search, Home, Moon, Sun, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Menu, X, BookOpen, ChevronDown, ChevronUp, Moon, Sun } from 'lucide-react';
 import { Streamdown } from 'streamdown';
-import { useTheme } from '@/contexts/ThemeContext';
-import chapters from '@/data/chapters.json';
-import chaptersContent from '@/data/chapters_content.json';
+import chaptersData from '@/data/chapters_structure.json';
 
 interface Chapter {
-  id: number;
+  id: string;
   title: string;
-  type: string;
-  preview: string;
+  number: number;
 }
 
-interface ChapterContent extends Chapter {
-  content: string;
-  start_line: number;
-  end_line: number;
+interface Part {
+  id: string;
+  title: string;
+  chapters: Chapter[];
 }
 
 export default function BookPage() {
-  const [currentChapterId, setCurrentChapterId] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [expandedParts, setExpandedParts] = useState<Set<number>>(new Set([0, 1]));
+  const [, setLocation] = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
 
-  const chaptersArray = chapters as Chapter[];
-  const contentArray = chaptersContent as ChapterContent[];
+  const [expandedParts, setExpandedParts] = useState<Set<string>>(
+    new Set(['part1'])
+  );
+  const [currentChapter, setCurrentChapter] = useState<string>('ch1');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [readChapters, setReadChapters] = useState<Set<string>>(new Set());
 
-  // Group chapters by parts
-  const groupedChapters = useMemo(() => {
-    const groups: { [key: string]: Chapter[] } = {
-      'Введение': [],
-      'Часть I': [],
-      'Часть II': [],
-      'Часть III': [],
-      'Часть IV': [],
-      'Часть V': [],
-      'Часть VI': [],
-      'Часть VII': [],
-      'Часть VIII': [],
-      'Часть IX': [],
-      'Часть X': [],
-      'Часть XI': [],
-      'Заключение': [],
-    };
-
-    chaptersArray.forEach((ch) => {
-      if (ch.type === 'intro') {
-        groups['Введение'].push(ch);
-      } else if (ch.type === 'conclusion') {
-        groups['Заключение'].push(ch);
-      } else {
-        if (ch.id <= 3) groups['Часть I'].push(ch);
-        else if (ch.id <= 6) groups['Часть II'].push(ch);
-        else if (ch.id <= 10) groups['Часть III'].push(ch);
-        else if (ch.id <= 15) groups['Часть IV'].push(ch);
-        else if (ch.id <= 19) groups['Часть V'].push(ch);
-        else if (ch.id <= 24) groups['Часть VI'].push(ch);
-        else if (ch.id <= 34) groups['Часть VII'].push(ch);
-        else if (ch.id <= 37) groups['Часть VIII'].push(ch);
-        else if (ch.id <= 42) groups['Часть IX'].push(ch);
-        else if (ch.id <= 47) groups['Часть X'].push(ch);
-        else groups['Часть XI'].push(ch);
+  // Load state from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('readChapters');
+    if (saved) {
+      setReadChapters(new Set(JSON.parse(saved)));
+    }
+    const lastChapter = localStorage.getItem('lastChapter');
+    if (lastChapter) {
+      setCurrentChapter(lastChapter);
+      // Expand the part containing the last chapter
+      const part = (chaptersData as { parts: Part[] }).parts.find(p =>
+        p.chapters.some(c => c.id === lastChapter)
+      );
+      if (part) {
+        setExpandedParts(new Set([part.id]));
       }
-    });
+    }
+  }, []);
 
-    return groups;
-  }, [chaptersArray]);
+  // Save read chapters and current chapter
+  useEffect(() => {
+    localStorage.setItem('readChapters', JSON.stringify(Array.from(readChapters)));
+    localStorage.setItem('lastChapter', currentChapter);
+  }, [readChapters, currentChapter]);
 
-  // Filter chapters based on search
-  const filteredChapters = useMemo(() => {
-    if (!searchQuery.trim()) return chaptersArray;
-
-    const query = searchQuery.toLowerCase();
-    return chaptersArray.filter((ch) =>
-      ch.title.toLowerCase().includes(query) ||
-      ch.preview.toLowerCase().includes(query)
-    );
-  }, [searchQuery, chaptersArray]);
-
-  const currentChapter = contentArray.find((ch) => ch.id === currentChapterId);
-
-  const togglePart = (partIndex: number) => {
+  const togglePart = (partId: string) => {
     const newExpanded = new Set(expandedParts);
-    if (newExpanded.has(partIndex)) {
-      newExpanded.delete(partIndex);
+    if (newExpanded.has(partId)) {
+      newExpanded.delete(partId);
     } else {
-      newExpanded.add(partIndex);
+      newExpanded.add(partId);
     }
     setExpandedParts(newExpanded);
   };
 
-  const partKeys = Object.keys(groupedChapters);
+  const handleChapterClick = (chapterId: string) => {
+    setCurrentChapter(chapterId);
+    // Mark as read
+    const newRead = new Set(readChapters);
+    newRead.add(chapterId);
+    setReadChapters(newRead);
+  };
+
+  const parts = (chaptersData as { parts: Part[] }).parts;
+
+  // Filter chapters based on search
+  const filteredParts = parts
+    .map(part => ({
+      ...part,
+      chapters: part.chapters.filter(
+        ch =>
+          ch.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          part.title.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    }))
+    .filter(part => part.chapters.length > 0);
+
+  // Get current chapter info
+  const currentChapterObj = parts
+    .flatMap(p => p.chapters)
+    .find(ch => ch.id === currentChapter);
+
+  // Get chapter content (placeholder - in real app would load from markdown)
+  const chapterContent = `# ${currentChapterObj?.title || 'Глава'}
+
+Содержание главы ${currentChapterObj?.number} будет загружено здесь.
+
+## Введение
+
+Это содержимое главы. В реальном приложении здесь будет полный текст из markdown файла.
+
+## Основные идеи
+
+- Пункт 1
+- Пункт 2
+- Пункт 3
+
+## Заключение
+
+Дополнительная информация и выводы.`;
+
+  const allChapters = parts.flatMap(p => p.chapters);
+  const currentIndex = allChapters.findIndex(ch => ch.id === currentChapter);
+  const prevChapter = currentIndex > 0 ? allChapters[currentIndex - 1] : null;
+  const nextChapter = currentIndex < allChapters.length - 1 ? allChapters[currentIndex + 1] : null;
 
   return (
-    <div className={`flex h-screen ${theme === 'dark' ? 'bg-slate-950 text-slate-50' : 'bg-white text-slate-950'}`}>
+    <div className={`flex h-screen ${isDark ? 'bg-slate-950' : 'bg-white'}`}>
       {/* Sidebar */}
       <div
-        className={`${
-          sidebarOpen ? 'w-72' : 'w-0'
-        } ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'} border-r transition-all duration-300 flex flex-col overflow-hidden`}
+        className={`w-80 border-r overflow-y-auto flex flex-col ${
+          isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'
+        }`}
       >
-        {/* Search */}
-        <div className={`p-6 border-b ${theme === 'dark' ? 'border-slate-800' : 'border-slate-200'}`}>
+        {/* Header */}
+        <div className={`sticky top-0 z-10 p-4 border-b space-y-4 ${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setLocation('/')}
+              className={`p-2 rounded-lg transition-colors ${
+                isDark
+                  ? 'hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+                  : 'hover:bg-slate-200 text-slate-600 hover:text-slate-900'
+              }`}
+              title="На главную"
+            >
+              <Home className="w-5 h-5" />
+            </button>
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-lg transition-colors ${
+                isDark
+                  ? 'bg-slate-800 hover:bg-slate-700 text-yellow-400'
+                  : 'bg-slate-200 hover:bg-slate-300 text-slate-700'
+              }`}
+            >
+              {isDark ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
+            </button>
+          </div>
           <div className="relative">
-            <Search className={`absolute left-3 top-3.5 w-4 h-4 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`} />
+            <Search className={`absolute left-3 top-3 w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
             <Input
+              type="text"
               placeholder="Поиск..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={`pl-10 text-sm ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-50' : 'bg-white border-slate-300 text-slate-950'}`}
+              onChange={e => setSearchQuery(e.target.value)}
+              className={`pl-10 text-sm ${
+                isDark
+                  ? 'bg-slate-800 border-slate-700 text-slate-200 placeholder:text-slate-500'
+                  : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400'
+              }`}
             />
           </div>
         </div>
 
         {/* Chapters List */}
-        <ScrollArea className="flex-1">
-          <div className="p-4 space-y-1">
-            {searchQuery ? (
-              <div className="space-y-2">
-                <div className={`text-xs font-semibold uppercase tracking-wide ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} px-3 py-2`}>
-                  Результаты ({filteredChapters.length})
+        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          {filteredParts.map(part => (
+            <div key={part.id}>
+              <button
+                onClick={() => togglePart(part.id)}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-semibold text-sm transition-colors ${
+                  isDark
+                    ? 'hover:bg-slate-800 text-slate-200'
+                    : 'hover:bg-slate-200 text-slate-900'
+                }`}
+              >
+                <span className="truncate text-left flex-1">{part.title}</span>
+                {expandedParts.has(part.id) ? (
+                  <ChevronUp className="w-4 h-4 flex-shrink-0 ml-2" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 flex-shrink-0 ml-2" />
+                )}
+              </button>
+
+              {expandedParts.has(part.id) && (
+                <div className="mt-1 space-y-1 border-l-2 border-slate-700 pl-3">
+                  {part.chapters.map(chapter => {
+                    const isRead = readChapters.has(chapter.id);
+                    const isActive = currentChapter === chapter.id;
+
+                    return (
+                      <button
+                        key={chapter.id}
+                        onClick={() => handleChapterClick(chapter.id)}
+                        className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
+                          isActive
+                            ? isDark
+                              ? 'bg-cyan-500/20 text-cyan-400'
+                              : 'bg-cyan-100 text-cyan-700'
+                            : isDark
+                            ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                        }`}
+                        title={chapter.title}
+                      >
+                        <div className="flex items-center gap-2">
+                          {isRead && (
+                            <span className="text-xs text-green-500 flex-shrink-0">✓</span>
+                          )}
+                          <span className="flex-1 truncate">
+                            {chapter.number}. {chapter.title}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
-                {filteredChapters.map((ch) => (
-                  <button
-                    key={ch.id}
-                    onClick={() => {
-                      setCurrentChapterId(ch.id);
-                      setSidebarOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded transition-colors text-sm ${
-                      currentChapterId === ch.id
-                        ? 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 font-medium'
-                        : theme === 'dark'
-                        ? 'hover:bg-slate-800 text-slate-300'
-                        : 'hover:bg-slate-100 text-slate-700'
-                    }`}
-                  >
-                    <div className="truncate">{ch.title}</div>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              partKeys.map((partKey, partIndex) => {
-                const partChapters = groupedChapters[partKey];
-                if (partChapters.length === 0) return null;
-
-                const isExpanded = expandedParts.has(partIndex);
-
-                return (
-                  <div key={partKey} className="space-y-0.5">
-                    <button
-                      onClick={() => togglePart(partIndex)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded transition-colors text-xs font-semibold uppercase tracking-wide ${
-                        theme === 'dark'
-                          ? 'hover:bg-slate-800 text-slate-400'
-                          : 'hover:bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      <span>{partKey}</span>
-                      {isExpanded ? (
-                        <ChevronUp className="w-3.5 h-3.5" />
-                      ) : (
-                        <ChevronDown className="w-3.5 h-3.5" />
-                      )}
-                    </button>
-
-                    {isExpanded && (
-                      <div className="pl-2 space-y-0.5">
-                        {partChapters.map((ch) => (
-                          <button
-                            key={ch.id}
-                            onClick={() => {
-                              setCurrentChapterId(ch.id);
-                              setSidebarOpen(false);
-                            }}
-                            className={`w-full text-left px-3 py-2 rounded transition-colors text-sm ${
-                              currentChapterId === ch.id
-                                ? 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 font-medium'
-                                : theme === 'dark'
-                                ? 'hover:bg-slate-800 text-slate-400'
-                                : 'hover:bg-slate-100 text-slate-700'
-                            }`}
-                          >
-                            <div className="truncate">{ch.title}</div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </ScrollArea>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className={`border-b ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} px-6 py-4 flex items-center justify-between sticky top-0 z-10`}>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className={`p-2 rounded transition-colors ${
-                theme === 'dark'
-                  ? 'hover:bg-slate-800'
-                  : 'hover:bg-slate-100'
-              }`}
-            >
-              {sidebarOpen ? (
-                <X className="w-5 h-5" />
-              ) : (
-                <Menu className="w-5 h-5" />
-              )}
-            </button>
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
-                <BookOpen className="w-3 h-3 text-white" />
-              </div>
-              <h1 className="text-sm font-semibold tracking-tight">Synthetic JTBD</h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className={`text-xs font-medium ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
-              {currentChapterId + 1} / {chaptersArray.length}
-            </div>
-            <button
-              onClick={toggleTheme}
-              className={`p-2 rounded transition-colors ${
-                theme === 'dark'
-                  ? 'bg-slate-800 hover:bg-slate-700 text-yellow-400'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-              }`}
-            >
-              {theme === 'dark' ? (
-                <Sun className="w-4 h-4" />
-              ) : (
-                <Moon className="w-4 h-4" />
-              )}
-            </button>
+        {/* Top Bar */}
+        <div
+          className={`border-b ${
+            isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'
+          } px-8 py-4 flex items-center justify-between`}
+        >
+          <div>
+            <h1 className={`text-2xl font-bold ${isDark ? 'text-slate-50' : 'text-slate-900'}`}>
+              {currentChapterObj?.title}
+            </h1>
+            <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              Глава {currentChapterObj?.number} • Прочитано {readChapters.size} из{' '}
+              {allChapters.length} глав
+            </p>
           </div>
         </div>
 
-        {/* Content */}
-        <ScrollArea className="flex-1">
-          <div className="w-full flex justify-center px-6 py-12">
-            <div className="w-full max-w-2xl">
-              {currentChapter ? (
-                <article className="space-y-8">
-                  {/* Title Section */}
-                  <div className="space-y-4 pb-8 border-b border-slate-200 dark:border-slate-800">
-                    <h1 className={`text-4xl md:text-5xl font-bold leading-tight tracking-tight ${theme === 'dark' ? 'text-slate-50' : 'text-slate-950'}`}>
-                      {currentChapter.title}
-                    </h1>
-                    <div className="flex gap-2 flex-wrap pt-4">
-                      {currentChapterId > 0 && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCurrentChapterId(currentChapterId - 1)}
-                          className={`text-xs font-medium ${theme === 'dark' ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-300 hover:bg-slate-100'}`}
-                        >
-                          ← Предыдущая
-                        </Button>
-                      )}
-                      {currentChapterId < chaptersArray.length - 1 && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCurrentChapterId(currentChapterId + 1)}
-                          className={`text-xs font-medium ${theme === 'dark' ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-300 hover:bg-slate-100'}`}
-                        >
-                          Следующая →
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className={`prose prose-lg max-w-none ${theme === 'dark' ? 'prose-invert' : ''}`}>
-                    <style>{`
-                      .prose {
-                        --tw-prose-body: ${theme === 'dark' ? '#cbd5e1' : '#475569'};
-                        --tw-prose-headings: ${theme === 'dark' ? '#f1f5f9' : '#0f172a'};
-                        --tw-prose-lead: ${theme === 'dark' ? '#cbd5e1' : '#475569'};
-                        --tw-prose-links: #06b6d4;
-                        --tw-prose-bold: ${theme === 'dark' ? '#f1f5f9' : '#0f172a'};
-                        --tw-prose-counters: #06b6d4;
-                        --tw-prose-bullets: #06b6d4;
-                        --tw-prose-hr: ${theme === 'dark' ? '#334155' : '#e2e8f0'};
-                        --tw-prose-quotes: ${theme === 'dark' ? '#cbd5e1' : '#475569'};
-                        --tw-prose-quote-borders: #06b6d4;
-                        --tw-prose-captions: ${theme === 'dark' ? '#94a3b8' : '#64748b'};
-                        --tw-prose-kbd: ${theme === 'dark' ? '#f1f5f9' : '#0f172a'};
-                        --tw-prose-kbd-shadows: rgb(6 182 212 / 0.1);
-                        --tw-prose-code: #06b6d4;
-                        --tw-prose-pre-bg: ${theme === 'dark' ? '#1e293b' : '#f1f5f9'};
-                        --tw-prose-pre-code: ${theme === 'dark' ? '#cbd5e1' : '#0f172a'};
-                        --tw-prose-pre-border: ${theme === 'dark' ? '#334155' : '#e2e8f0'};
-                        --tw-prose-th-borders: ${theme === 'dark' ? '#334155' : '#e2e8f0'};
-                        --tw-prose-td-borders: ${theme === 'dark' ? '#334155' : '#e2e8f0'};
-                      }
-
-                      .prose h2 {
-                        margin-top: 2rem;
-                        margin-bottom: 1rem;
-                        font-size: 1.875rem;
-                        font-weight: 700;
-                        line-height: 1.2;
-                      }
-
-                      .prose h3 {
-                        margin-top: 1.5rem;
-                        margin-bottom: 0.75rem;
-                        font-size: 1.25rem;
-                        font-weight: 600;
-                        line-height: 1.3;
-                      }
-
-                      .prose h4 {
-                        margin-top: 1rem;
-                        margin-bottom: 0.5rem;
-                        font-size: 1.1rem;
-                        font-weight: 600;
-                      }
-
-                      .prose p {
-                        margin-bottom: 1.25rem;
-                        line-height: 1.75;
-                        font-size: 1.0625rem;
-                      }
-
-                      .prose ul, .prose ol {
-                        margin-bottom: 1.25rem;
-                        padding-left: 1.625rem;
-                      }
-
-                      .prose li {
-                        margin-bottom: 0.5rem;
-                        line-height: 1.75;
-                      }
-
-                      .prose blockquote {
-                        margin-top: 1.5rem;
-                        margin-bottom: 1.5rem;
-                        padding-left: 1.25rem;
-                        border-left: 4px solid #06b6d4;
-                        font-style: italic;
-                      }
-
-                      .prose table {
-                        margin-top: 1.5rem;
-                        margin-bottom: 1.5rem;
-                        width: 100%;
-                        border-collapse: collapse;
-                      }
-
-                      .prose th {
-                        padding: 0.75rem;
-                        text-align: left;
-                        font-weight: 600;
-                        border-bottom: 2px solid var(--tw-prose-th-borders);
-                      }
-
-                      .prose td {
-                        padding: 0.75rem;
-                        border-bottom: 1px solid var(--tw-prose-td-borders);
-                      }
-
-                      .prose code {
-                        padding: 0.125rem 0.375rem;
-                        border-radius: 0.25rem;
-                        background-color: ${theme === 'dark' ? '#1e293b' : '#f1f5f9'};
-                        font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-                        font-size: 0.9em;
-                      }
-
-                      .prose pre {
-                        margin-top: 1.5rem;
-                        margin-bottom: 1.5rem;
-                        padding: 1rem;
-                        border-radius: 0.5rem;
-                        overflow-x: auto;
-                      }
-
-                      .prose pre code {
-                        padding: 0;
-                        background-color: transparent;
-                      }
-
-                      .prose strong {
-                        font-weight: 600;
-                      }
-
-                      .prose em {
-                        font-style: italic;
-                      }
-
-                      .prose a {
-                        text-decoration: underline;
-                        text-decoration-color: rgba(6, 182, 212, 0.3);
-                        transition: all 0.2s;
-                      }
-
-                      .prose a:hover {
-                        text-decoration-color: #06b6d4;
-                      }
-
-                      .prose hr {
-                        margin-top: 2rem;
-                        margin-bottom: 2rem;
-                        border: none;
-                        border-top: 1px solid var(--tw-prose-hr);
-                      }
-                    `}</style>
-                    <Streamdown>{currentChapter.content}</Streamdown>
-                  </div>
-
-                  {/* Navigation Footer */}
-                  <div className={`flex gap-4 pt-8 border-t ${theme === 'dark' ? 'border-slate-800' : 'border-slate-200'}`}>
-                    {currentChapterId > 0 && (
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentChapterId(currentChapterId - 1)}
-                        className={`flex-1 ${theme === 'dark' ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-300 hover:bg-slate-100'}`}
-                      >
-                        ← Предыдущая
-                      </Button>
-                    )}
-                    {currentChapterId < chaptersArray.length - 1 && (
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentChapterId(currentChapterId + 1)}
-                        className={`flex-1 ${theme === 'dark' ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-300 hover:bg-slate-100'}`}
-                      >
-                        Следующая →
-                      </Button>
-                    )}
-                  </div>
-                </article>
-              ) : (
-                <div className="flex items-center justify-center h-96">
-                  <p className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>
-                    Выберите главу для чтения
-                  </p>
-                </div>
-              )}
-            </div>
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-2xl mx-auto px-8 py-12">
+            <article
+              className={`prose ${
+                isDark
+                  ? 'prose-invert'
+                  : 'prose'
+              } max-w-none`}
+            >
+              <Streamdown>{chapterContent}</Streamdown>
+            </article>
           </div>
-        </ScrollArea>
+        </div>
+
+        {/* Navigation Footer */}
+        <div
+          className={`border-t ${
+            isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'
+          } px-8 py-6`}
+        >
+          <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+            <Button
+              variant="outline"
+              onClick={() => prevChapter && handleChapterClick(prevChapter.id)}
+              disabled={!prevChapter}
+              className={`flex items-center gap-2 ${
+                isDark
+                  ? 'border-slate-700 hover:bg-slate-800'
+                  : 'border-slate-300 hover:bg-slate-100'
+              }`}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Предыдущая
+            </Button>
+
+            <div className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              {currentChapterObj?.number} из {allChapters.length}
+            </div>
+
+            <Button
+              onClick={() => nextChapter && handleChapterClick(nextChapter.id)}
+              disabled={!nextChapter}
+              className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white flex items-center gap-2"
+            >
+              Следующая
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
