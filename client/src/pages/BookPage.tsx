@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useTheme } from '@/contexts/ThemeContext';
-import { ChevronDown, ChevronUp, Search, Home, Moon, Sun, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, Home, Moon, Sun, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Streamdown } from 'streamdown';
@@ -30,6 +30,20 @@ export default function BookPage() {
   const [currentChapter, setCurrentChapter] = useState<string>('ch1');
   const [searchQuery, setSearchQuery] = useState('');
   const [readChapters, setReadChapters] = useState<Set<string>>(new Set());
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile and handle resize
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) setSidebarOpen(true);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Load state from localStorage
   useEffect(() => {
@@ -72,6 +86,10 @@ export default function BookPage() {
     const newRead = new Set(readChapters);
     newRead.add(chapterId);
     setReadChapters(newRead);
+    // Close sidebar on mobile
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
   };
 
   const parts = (chaptersData as { parts: Part[] }).parts;
@@ -119,9 +137,23 @@ export default function BookPage() {
 
   return (
     <div className={`flex h-screen ${isDark ? 'bg-slate-950' : 'bg-white'}`}>
+      {/* Mobile Overlay */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <div
-        className={`w-80 border-r overflow-y-auto flex flex-col ${
+        className={`${
+          isMobile
+            ? `fixed left-0 top-0 h-full z-40 transition-transform duration-300 ${
+                sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+              }`
+            : 'relative'
+        } w-80 border-r overflow-y-auto flex flex-col ${
           isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'
         }`}
       >
@@ -153,6 +185,18 @@ export default function BookPage() {
                 <Moon className="w-5 h-5" />
               )}
             </button>
+            {isMobile && (
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className={`p-2 rounded-lg transition-colors ${
+                  isDark
+                    ? 'hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+                    : 'hover:bg-slate-200 text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
           </div>
           <div className="relative">
             <Search className={`absolute left-3 top-3 w-4 h-4 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
@@ -235,28 +279,42 @@ export default function BookPage() {
         <div
           className={`border-b ${
             isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'
-          } px-8 py-4 flex items-center justify-between`}
+          } px-4 md:px-8 py-4 flex items-center justify-between`}
         >
-          <div>
-            <h1 className={`text-2xl font-bold ${isDark ? 'text-slate-50' : 'text-slate-900'}`}>
-              {currentChapterObj?.title}
-            </h1>
-            <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-              Глава {currentChapterObj?.number} • Прочитано {readChapters.size} из{' '}
-              {allChapters.length} глав
-            </p>
+          <div className="flex items-center gap-4 flex-1">
+            {isMobile && (
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className={`p-2 rounded-lg transition-colors ${
+                  isDark
+                    ? 'hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+                    : 'hover:bg-slate-200 text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+            )}
+            <div className="min-w-0">
+              <h1 className={`text-lg md:text-2xl font-bold truncate ${isDark ? 'text-slate-50' : 'text-slate-900'}`}>
+                {currentChapterObj?.title}
+              </h1>
+              <p className={`text-xs md:text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                Глава {currentChapterObj?.number} • Прочитано {readChapters.size} из{' '}
+                {allChapters.length}
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-2xl mx-auto px-8 py-12">
+          <div className="max-w-2xl mx-auto px-4 md:px-8 py-8 md:py-12">
             <article
               className={`prose ${
                 isDark
                   ? 'prose-invert'
                   : 'prose'
-              } max-w-none`}
+              } max-w-none text-base md:text-lg leading-relaxed`}
             >
               <Streamdown>{chapterContent}</Streamdown>
             </article>
@@ -267,33 +325,33 @@ export default function BookPage() {
         <div
           className={`border-t ${
             isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'
-          } px-8 py-6`}
+          } px-4 md:px-8 py-4 md:py-6`}
         >
-          <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+          <div className="max-w-2xl mx-auto flex items-center justify-between gap-2 md:gap-4">
             <Button
               variant="outline"
               onClick={() => prevChapter && handleChapterClick(prevChapter.id)}
               disabled={!prevChapter}
-              className={`flex items-center gap-2 ${
+              className={`flex items-center gap-1 md:gap-2 text-sm md:text-base ${
                 isDark
                   ? 'border-slate-700 hover:bg-slate-800'
                   : 'border-slate-300 hover:bg-slate-100'
               }`}
             >
               <ChevronLeft className="w-4 h-4" />
-              Предыдущая
+              <span className="hidden md:inline">Предыдущая</span>
             </Button>
 
-            <div className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-              {currentChapterObj?.number} из {allChapters.length}
+            <div className={`text-xs md:text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              {currentChapterObj?.number} / {allChapters.length}
             </div>
 
             <Button
               onClick={() => nextChapter && handleChapterClick(nextChapter.id)}
               disabled={!nextChapter}
-              className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white flex items-center gap-2"
+              className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white flex items-center gap-1 md:gap-2 text-sm md:text-base"
             >
-              Следующая
+              <span className="hidden md:inline">Следующая</span>
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
