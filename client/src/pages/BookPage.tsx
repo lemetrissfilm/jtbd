@@ -305,7 +305,7 @@ export default function BookPage() {
 
         {/* Content area */}
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-2xl mx-auto px-4 lg:px-8 py-12">
+          <div className="max-w-4xl mx-auto px-4 lg:px-8 py-12">
             <article className="prose prose-sm dark:prose-invert max-w-none">
               <h1 className="text-4xl font-bold mb-8">{currentChapter.title}</h1>
               <div className="text-lg leading-relaxed">
