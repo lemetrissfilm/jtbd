@@ -308,7 +308,7 @@ export default function BookPage() {
           <div className="max-w-2xl mx-auto px-4 lg:px-8 py-12">
             <article className="prose prose-sm dark:prose-invert max-w-none">
               <h1 className="text-4xl font-bold mb-8">{currentChapter.title}</h1>
-              <div className="text-lg leading-relaxed whitespace-pre-wrap">
+              <div className="text-lg leading-relaxed">
                 <Streamdown>{currentChapter.content}</Streamdown>
               </div>
             </article>
