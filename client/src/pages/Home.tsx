@@ -9,13 +9,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <header className="border-b border-border">
+      {/* Header - Дивайдер убрать */}
+      <header className="border-b-0 border-border">
         <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-sm">
-              S
-            </div>
             <span className="font-semibold text-lg">Synthetic JTBD</span>
           </div>
           <button
@@ -47,17 +44,10 @@ export default function Home() {
             <Button
               onClick={() => navigate('/book')}
               size="lg"
-              className="gap-2"
+              className="gap-2 px-8 py-6 text-lg font-semibold hover:scale-105 transition-transform"
             >
               Начать чтение
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={toggleTheme}
-            >
-              {theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}
+              <ArrowRight className="w-5 h-5" />
             </Button>
           </div>
         </section>
@@ -129,8 +119,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="space-y-6 py-12 border-t border-border">
+        {/* CTA - Убрать */}
+        <section className="hidden space-y-6 py-12 border-t border-border">
           <div className="space-y-4">
             <h2 className="text-3xl font-bold">Готовы начать?</h2>
             <p className="text-lg text-muted-foreground">
@@ -151,7 +141,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-border mt-24">
         <div className="max-w-4xl mx-auto px-4 py-8 text-center text-sm text-muted-foreground">
-          <p>Synthetic JTBD — открытая методология для понимания пользователей</p>
+          <p>Synthetic JTBD — открытая методология для понимания пользователей от Дмитрия Михайлова</p>
         </div>
       </footer>
     </div>
