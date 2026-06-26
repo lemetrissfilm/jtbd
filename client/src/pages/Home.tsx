@@ -1,37 +1,79 @@
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { ArrowRight, Moon, Sun, MessageSquare, CheckCircle } from 'lucide-react';
+import { ArrowRight, Moon, Sun, MessageSquare, CheckCircle, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
 
 export default function Home() {
   const [, navigate] = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const [hasStartedReading, setHasStartedReading] = useState(false);
+
+  // Check if user has already started reading
+  useEffect(() => {
+    const lastRead = localStorage.getItem('lastReadChapter');
+    const readChapters = localStorage.getItem('readChapters');
+    if (lastRead !== null || (readChapters && JSON.parse(readChapters).length > 0)) {
+      setHasStartedReading(true);
+    }
+  }, []);
+
+  const ctaLabel = hasStartedReading ? 'Продолжить чтение' : 'Начать чтение';
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Header - Дивайдер убрать */}
-      <header className="border-b-0 border-border">
-        <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-lg">Synthetic JTBD</span>
-          </div>
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg hover:bg-secondary transition-colors"
-          >
-            {theme === 'light' ? (
-              <Moon className="w-5 h-5" />
-            ) : (
-              <Sun className="w-5 h-5" />
-            )}
-          </button>
+      {/* Header */}
+      <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-10">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+          <span className="font-bold" style={{ color: '#3a3c40', fontSize: '22px' }}>
+            Synthetic JTBD
+          </span>
+          <nav className="flex items-center gap-1">
+            <Button
+              onClick={() => navigate('/chat')}
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-muted-foreground hover:text-foreground"
+            >
+              <MessageSquare className="w-4 h-4" />
+              AI-чат
+            </Button>
+            <Button
+              onClick={() => navigate('/trainer')}
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-muted-foreground hover:text-foreground"
+            >
+              <CheckCircle className="w-4 h-4" />
+              Тренажёр
+            </Button>
+            <Button
+              onClick={() => navigate('/book')}
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-muted-foreground hover:text-foreground"
+            >
+              <BookOpen className="w-4 h-4" />
+              Книга
+            </Button>
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg hover:bg-secondary transition-colors ml-1"
+            >
+              {theme === 'light' ? (
+                <Moon className="w-4 h-4" />
+              ) : (
+                <Sun className="w-4 h-4" />
+              )}
+            </button>
+          </nav>
         </div>
       </header>
 
       {/* Main content */}
       <main className="max-w-4xl mx-auto px-4 py-16 space-y-24">
         {/* Hero */}
-        <section className="space-y-6">
+        <section className="space-y-8">
           <div className="space-y-4">
             <h1 className="text-5xl font-bold leading-tight">
               Понимайте своих пользователей через их действия, а не слова
@@ -44,28 +86,10 @@ export default function Home() {
             <Button
               onClick={() => navigate('/book')}
               size="lg"
-              className="gap-2 px-8 py-6 text-lg font-semibold hover:scale-105 transition-transform"
+              className="gap-2 px-10 py-7 text-xl font-semibold hover:scale-105 transition-transform"
             >
-              Начать чтение
+              {ctaLabel}
               <ArrowRight className="w-5 h-5" />
-            </Button>
-            <Button
-              onClick={() => navigate('/chat')}
-              variant="outline"
-              size="lg"
-              className="gap-2 py-6"
-            >
-              <MessageSquare className="w-5 h-5" />
-              AI-чат
-            </Button>
-            <Button
-              onClick={() => navigate('/trainer')}
-              variant="outline"
-              size="lg"
-              className="gap-2 py-6"
-            >
-              <CheckCircle className="w-5 h-5" />
-              Тренажёр
             </Button>
           </div>
         </section>
@@ -137,27 +161,27 @@ export default function Home() {
           </div>
         </section>
 
-        {/* CTA - Убрать */}
-        <section className="hidden space-y-6 py-12 border-t border-border">
+        {/* Bottom CTA */}
+        <section className="space-y-6 py-12 border-t border-border">
           <div className="space-y-4">
             <h2 className="text-3xl font-bold">Готовы начать?</h2>
             <p className="text-lg text-muted-foreground">
-              Книга содержит ~100 страниц теории, примеров и практических упражнений. Рассчитана на 2-3 часа чтения.
+              Книга содержит ~100 страниц теории, примеров и практических упражнений. Рассчитана на 2–3 часа чтения.
             </p>
           </div>
           <Button
             onClick={() => navigate('/book')}
             size="lg"
-            className="gap-2"
+            className="gap-2 px-10 py-7 text-xl font-semibold hover:scale-105 transition-transform"
           >
-            Открыть книгу
-            <ArrowRight className="w-4 h-4" />
+            {ctaLabel}
+            <ArrowRight className="w-5 h-5" />
           </Button>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border mt-24">
+      <footer className="border-t border-border mt-8">
         <div className="max-w-4xl mx-auto px-4 py-8 text-center text-sm text-muted-foreground">
           <p>Synthetic JTBD — открытая методология для понимания пользователей от Дмитрия Михайлова</p>
         </div>
