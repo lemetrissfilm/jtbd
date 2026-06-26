@@ -6,13 +6,17 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import BookPage from "./pages/BookPage";
 import Home from "./pages/Home";
-
+import ChatPage from "./pages/ChatPage";
+import TrainerPage from "./pages/TrainerPage";
 
 function Router() {
+  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/book" component={BookPage} />
+      <Route path="/chat" component={ChatPage} />
+      <Route path="/trainer" component={TrainerPage} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

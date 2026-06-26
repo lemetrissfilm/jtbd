@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { ChevronDown, ChevronUp, Search, Home, Menu, X, Moon, Sun } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, Home, Menu, X, Moon, Sun, MessageSquare, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -218,10 +218,28 @@ export default function BookPage() {
           </div>
 
           {/* Theme toggle */}
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-border space-y-2">
+            <Button
+              onClick={() => navigate('/chat')}
+              variant="outline"
+              size="sm"
+              className="w-full gap-2 justify-start"
+            >
+              <MessageSquare className="w-4 h-4 text-primary" />
+              AI-чат по книге
+            </Button>
+            <Button
+              onClick={() => navigate('/trainer')}
+              variant="outline"
+              size="sm"
+              className="w-full gap-2 justify-start"
+            >
+              <CheckCircle className="w-4 h-4 text-primary" />
+              Тренажёр JTBD
+            </Button>
             <Button
               onClick={toggleTheme}
-              variant="outline"
+              variant="ghost"
               size="sm"
               className="w-full"
             >
@@ -255,6 +273,20 @@ export default function BookPage() {
             Synthetic JTBD
           </h1>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate('/chat')}
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            >
+              <MessageSquare className="w-4 h-4" />
+              AI-чат
+            </button>
+            <button
+              onClick={() => navigate('/trainer')}
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            >
+              <CheckCircle className="w-4 h-4" />
+              Тренажёр
+            </button>
             <span className="text-sm text-muted-foreground">
               {currentChapterIndex + 1} / {chaptersData.length}
             </span>

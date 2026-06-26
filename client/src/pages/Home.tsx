@@ -1,5 +1,5 @@
 import { useLocation } from 'wouter';
-import { ArrowRight, Moon, Sun } from 'lucide-react';
+import { ArrowRight, Moon, Sun, MessageSquare, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -40,7 +40,7 @@ export default function Home() {
               Synthetic JTBD — методология для исследования реальных потребностей пользователей. Без дорогих фокус-групп. Без предвзятых интервью. Только данные.
             </p>
           </div>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-3">
             <Button
               onClick={() => navigate('/book')}
               size="lg"
@@ -48,6 +48,24 @@ export default function Home() {
             >
               Начать чтение
               <ArrowRight className="w-5 h-5" />
+            </Button>
+            <Button
+              onClick={() => navigate('/chat')}
+              variant="outline"
+              size="lg"
+              className="gap-2 py-6"
+            >
+              <MessageSquare className="w-5 h-5" />
+              AI-чат
+            </Button>
+            <Button
+              onClick={() => navigate('/trainer')}
+              variant="outline"
+              size="lg"
+              className="gap-2 py-6"
+            >
+              <CheckCircle className="w-5 h-5" />
+              Тренажёр
             </Button>
           </div>
         </section>
