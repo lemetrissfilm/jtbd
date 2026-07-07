@@ -79,9 +79,9 @@
 }
 
 .dark {
-  --primary: #06b6d4;
+  --primary: #f1f5f9;
   --primary-foreground: #0f172a;
-  --sidebar-primary: #06b6d4;
+  --sidebar-primary: #f1f5f9;
   --sidebar-primary-foreground: #0f172a;
   --background: #0f172a;
   --foreground: #f1f5f9;
@@ -93,24 +93,24 @@
   --secondary-foreground: #e2e8f0;
   --muted: #475569;
   --muted-foreground: #cbd5e1;
-  --accent: #06b6d4;
+  --accent: #f1f5f9;
   --accent-foreground: #0f172a;
   --destructive: #f87171;
   --destructive-foreground: #0f172a;
   --border: #334155;
   --input: #1e293b;
-  --ring: #06b6d4;
-  --chart-1: #06b6d4;
-  --chart-2: #0ea5e9;
-  --chart-3: #3b82f6;
-  --chart-4: #8b5cf6;
-  --chart-5: #ec4899;
+  --ring: #f1f5f9;
+  --chart-1: #f1f5f9;
+  --chart-2: #cbd5e1;
+  --chart-3: #94a3b8;
+  --chart-4: #64748b;
+  --chart-5: #475569;
   --sidebar: #1e293b;
   --sidebar-foreground: #f1f5f9;
-  --sidebar-accent: #06b6d4;
+  --sidebar-accent: #f1f5f9;
   --sidebar-accent-foreground: #0f172a;
   --sidebar-border: #334155;
-  --sidebar-ring: #06b6d4;
+  --sidebar-ring: #f1f5f9;
 }
 
 @layer base {
