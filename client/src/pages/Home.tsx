@@ -122,22 +122,6 @@ export default function Home() {
           <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
         </button>
 
-        {/* Secondary links */}
-        <div className="mt-6 flex items-center gap-6">
-          <button
-            onClick={() => navigate("/chat")}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
-          >
-            AI-чат по книге
-          </button>
-          <span className="text-muted-foreground opacity-40">·</span>
-          <button
-            onClick={() => navigate("/trainer")}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
-          >
-            Тренажёр артефактов
-          </button>
-        </div>
       </section>
 
       {/* ── Features strip ── */}
