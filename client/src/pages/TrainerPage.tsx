@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { ArrowLeft, CheckCircle, MessageSquare, Sparkles, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { trpc } from "@/lib/trpc";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -112,7 +110,6 @@ export default function TrainerPage() {
       const userMsg = evalMessages.length === 0
         ? `Проверь этот артефакт (тип: ${ARTIFACT_TYPES.find(t => t.value === selectedType)?.label}):\n\n${artifact}`
         : followUpInput;
-
       setEvalMessages((prev) => [
         ...prev,
         { role: "user", content: userMsg },
@@ -140,15 +137,8 @@ export default function TrainerPage() {
 
   const handleFollowUp = () => {
     if (!followUpInput.trim() || evalMessages.length === 0) return;
-    const allMessages: EvalMessage[] = [
-      ...evalMessages,
-      { role: "user", content: followUpInput },
-    ];
-    evaluateMutation.mutate({
-      artifact,
-      artifactType: selectedType,
-      messages: allMessages,
-    });
+    const allMessages: EvalMessage[] = [...evalMessages, { role: "user", content: followUpInput }];
+    evaluateMutation.mutate({ artifact, artifactType: selectedType, messages: allMessages });
   };
 
   const handleReset = () => {
@@ -163,78 +153,86 @@ export default function TrainerPage() {
   const selectedTypeLabel = ARTIFACT_TYPES.find(t => t.value === selectedType)?.label || "Job Story";
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Header */}
-      <header className="border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/book")}
-              className="gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              К книге
-            </Button>
-            <div className="w-px h-5 bg-border" />
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
-                <CheckCircle className="w-4 h-4 text-primary" />
-              </div>
-              <span className="font-semibold">Тренажёр JTBD</span>
-            </div>
-          </div>
+      <header
+        className="flex items-center justify-between px-4 py-3"
+        style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+      >
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate("/book")}
+            className="flex items-center gap-1.5 text-white/40 hover:text-white transition-colors text-sm"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            К книге
+          </button>
+          <span className="text-white/15">|</span>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/chat")}
-              className="gap-2 text-muted-foreground hover:text-foreground"
+            <div
+              className="w-7 h-7 rounded-xl flex items-center justify-center"
+              style={{ background: "rgba(255,255,255,0.1)" }}
             >
-              <MessageSquare className="w-4 h-4" />
-              AI-чат
-            </Button>
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-secondary transition-colors"
-            >
-              {theme === "light" ? (
-                <Moon className="w-4 h-4" />
-              ) : (
-                <Sun className="w-4 h-4" />
-              )}
-            </button>
+              <CheckCircle className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span className="font-bold text-sm tracking-tight">Тренажёр JTBD</span>
           </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => navigate("/chat")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-white/40 hover:text-white hover:bg-white/[0.08] transition-all"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            AI-чат
+          </button>
+          <button
+            onClick={toggleTheme}
+            className="p-1.5 rounded-full text-white/30 hover:text-white hover:bg-white/[0.08] transition-all"
+          >
+            {theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+          </button>
         </div>
       </header>
 
-      {/* Main content */}
+      {/* Main */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
+
           {/* Left: Artifact input */}
           <div className="flex flex-col gap-4">
             <div>
-              <h2 className="text-lg font-semibold mb-1">Ваш артефакт</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-lg font-black tracking-tight">Ваш артефакт</h2>
+              <p className="text-xs text-white/40 mt-1">
                 Напишите или вставьте артефакт JTBD — AI проверит его по критериям методологии
               </p>
             </div>
 
-            {/* Artifact type selector */}
+            {/* Type selector */}
             <div className="relative">
-              <label className="text-sm font-medium text-muted-foreground mb-1.5 block">
+              <label className="text-xs font-medium text-white/40 mb-1.5 block uppercase tracking-wide">
                 Тип артефакта
               </label>
               <button
                 onClick={() => setShowTypeDropdown(!showTypeDropdown)}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-border bg-background hover:bg-secondary/50 transition-colors text-sm"
+                className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl text-sm font-medium transition-all"
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                }}
               >
                 <span>{selectedTypeLabel}</span>
-                <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", showTypeDropdown && "rotate-180")} />
+                <ChevronDown className={cn("w-4 h-4 text-white/40 transition-transform", showTypeDropdown && "rotate-180")} />
               </button>
               {showTypeDropdown && (
-                <div className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-border bg-card shadow-lg z-10">
+                <div
+                  className="absolute top-full left-0 right-0 mt-1 rounded-2xl overflow-hidden z-10"
+                  style={{
+                    background: "#111111",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    backdropFilter: "blur(20px)",
+                  }}
+                >
                   {ARTIFACT_TYPES.map((type) => (
                     <button
                       key={type.value}
@@ -243,8 +241,8 @@ export default function TrainerPage() {
                         setShowTypeDropdown(false);
                       }}
                       className={cn(
-                        "w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 transition-colors first:rounded-t-lg last:rounded-b-lg",
-                        selectedType === type.value && "bg-primary/10 text-primary font-medium"
+                        "w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-white/[0.06]",
+                        selectedType === type.value && "text-white font-semibold bg-white/[0.08]"
                       )}
                     >
                       {type.label}
@@ -254,32 +252,36 @@ export default function TrainerPage() {
               )}
             </div>
 
-            {/* Artifact textarea */}
+            {/* Textarea */}
             <div className="flex-1 flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-muted-foreground">
+                <label className="text-xs font-medium text-white/40 uppercase tracking-wide">
                   Текст артефакта
                 </label>
                 <button
                   onClick={loadExample}
-                  className="text-xs text-primary hover:underline"
+                  className="text-xs text-white/40 hover:text-white transition-colors"
                 >
-                  Загрузить пример
+                  Загрузить пример →
                 </button>
               </div>
-              <Textarea
+              <textarea
                 value={artifact}
                 onChange={(e) => setArtifact(e.target.value)}
                 placeholder={`Напишите ${selectedTypeLabel} для проверки...`}
-                className="flex-1 min-h-[300px] resize-none font-mono text-sm leading-relaxed"
+                className="flex-1 min-h-[280px] resize-none font-mono text-sm leading-relaxed p-4 rounded-2xl outline-none focus:ring-1 focus:ring-white/20 text-white placeholder:text-white/20"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
               />
             </div>
 
             <div className="flex gap-2">
-              <Button
+              <button
                 onClick={handleEvaluate}
                 disabled={!artifact.trim() || evaluateMutation.isPending}
-                className="flex-1 gap-2"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold bg-white text-black transition-all hover:bg-white/90 disabled:opacity-30 active:scale-[0.98]"
               >
                 {evaluateMutation.isPending ? (
                   <>
@@ -292,11 +294,15 @@ export default function TrainerPage() {
                     Проверить артефакт
                   </>
                 )}
-              </Button>
+              </button>
               {evalMessages.length > 0 && (
-                <Button variant="outline" onClick={handleReset} size="sm">
+                <button
+                  onClick={handleReset}
+                  className="px-4 py-3 rounded-2xl text-sm text-white/40 hover:text-white transition-colors"
+                  style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+                >
                   Сбросить
-                </Button>
+                </button>
               )}
             </div>
           </div>
@@ -304,27 +310,41 @@ export default function TrainerPage() {
           {/* Right: Feedback panel */}
           <div className="flex flex-col gap-4">
             <div>
-              <h2 className="text-lg font-semibold mb-1">Обратная связь AI</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-lg font-black tracking-tight">Обратная связь AI</h2>
+              <p className="text-xs text-white/40 mt-1">
                 AI проверит артефакт по критериям методологии и даст рекомендации
               </p>
             </div>
 
-            <div className="flex-1 rounded-lg border border-border bg-card overflow-hidden flex flex-col" style={{ minHeight: "400px" }}>
+            <div
+              className="flex-1 rounded-2xl overflow-hidden flex flex-col"
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                minHeight: "400px",
+              }}
+            >
               {evalMessages.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8 text-center text-muted-foreground">
-                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-                    <CheckCircle className="w-7 h-7 text-primary/50" />
+                <div className="flex-1 flex flex-col items-center justify-center gap-5 p-8 text-center">
+                  <div
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                    style={{ background: "rgba(255,255,255,0.08)" }}
+                  >
+                    <CheckCircle className="w-7 h-7 text-white/40" />
                   </div>
                   <div>
-                    <p className="font-medium mb-1">Готов к проверке</p>
-                    <p className="text-sm">
-                      Напишите артефакт слева и нажмите «Проверить» — AI оценит его по критериям Synthetic JTBD
+                    <p className="font-bold text-white mb-1">Готов к проверке</p>
+                    <p className="text-sm text-white/40">
+                      Напишите артефакт слева и нажмите «Проверить»
                     </p>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 w-full max-w-xs text-xs">
+                  <div className="grid grid-cols-2 gap-2 w-full max-w-xs">
                     {["Соответствие формату", "Глубина инсайтов", "Actionability", "Точность формулировок"].map((c) => (
-                      <div key={c} className="px-3 py-2 rounded-lg bg-secondary/50 border border-border">
+                      <div
+                        key={c}
+                        className="px-3 py-2 rounded-xl text-xs text-white/40"
+                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+                      >
                         {c}
                       </div>
                     ))}
@@ -333,55 +353,74 @@ export default function TrainerPage() {
               ) : (
                 <div className="flex flex-col flex-1 overflow-hidden">
                   <ScrollArea className="flex-1 p-4">
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {evalMessages.map((msg, i) => (
-                        <div key={i} className={cn(
-                          "rounded-lg p-4",
-                          msg.role === "user"
-                            ? "bg-secondary/30 border border-border"
-                            : "bg-primary/5 border border-primary/20"
-                        )}>
+                        <div
+                          key={i}
+                          className="rounded-2xl p-4"
+                          style={{
+                            background: msg.role === "user"
+                              ? "rgba(255,255,255,0.04)"
+                              : "rgba(255,255,255,0.07)",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                          }}
+                        >
                           <div className="flex items-center gap-2 mb-2">
                             {msg.role === "user" ? (
                               <>
-                                <div className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center">
-                                  <span className="text-xs font-bold">В</span>
+                                <div
+                                  className="w-5 h-5 rounded-full flex items-center justify-center"
+                                  style={{ background: "rgba(255,255,255,0.1)" }}
+                                >
+                                  <span className="text-xs font-bold text-white">В</span>
                                 </div>
-                                <span className="text-xs font-medium text-muted-foreground">Ваш артефакт</span>
+                                <span className="text-xs font-medium text-white/40">Ваш артефакт</span>
                               </>
                             ) : (
                               <>
-                                <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-                                  <Sparkles className="w-3 h-3 text-primary" />
+                                <div
+                                  className="w-5 h-5 rounded-full flex items-center justify-center"
+                                  style={{ background: "rgba(255,255,255,0.15)" }}
+                                >
+                                  <Sparkles className="w-3 h-3 text-white" />
                                 </div>
-                                <span className="text-xs font-medium text-primary">AI-ментор</span>
+                                <span className="text-xs font-bold text-white">AI-ментор</span>
                               </>
                             )}
                           </div>
                           {msg.role === "assistant" ? (
-                            <div className="prose prose-sm dark:prose-invert max-w-none text-sm">
+                            <div className="prose prose-invert prose-sm max-w-none text-sm prose-p:text-white/80 prose-strong:text-white prose-headings:text-white prose-li:text-white/80 prose-code:bg-white/10 prose-code:text-white/90 prose-code:px-1 prose-code:rounded">
                               <Streamdown>{msg.content}</Streamdown>
                             </div>
                           ) : (
-                            <p className="text-sm whitespace-pre-wrap font-mono text-muted-foreground line-clamp-3">
+                            <p className="text-sm whitespace-pre-wrap font-mono text-white/40 line-clamp-3">
                               {msg.content}
                             </p>
                           )}
                         </div>
                       ))}
                       {evaluateMutation.isPending && (
-                        <div className="rounded-lg p-4 bg-primary/5 border border-primary/20">
+                        <div
+                          className="rounded-2xl p-4"
+                          style={{
+                            background: "rgba(255,255,255,0.07)",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                          }}
+                        >
                           <div className="flex items-center gap-2 mb-2">
-                            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-                              <Sparkles className="w-3 h-3 text-primary animate-pulse" />
+                            <div
+                              className="w-5 h-5 rounded-full flex items-center justify-center"
+                              style={{ background: "rgba(255,255,255,0.15)" }}
+                            >
+                              <Sparkles className="w-3 h-3 text-white animate-pulse" />
                             </div>
-                            <span className="text-xs font-medium text-primary">AI-ментор анализирует...</span>
+                            <span className="text-xs font-bold text-white/60">AI-ментор анализирует...</span>
                           </div>
                           <div className="flex gap-1">
                             {[0, 1, 2].map((i) => (
                               <div
                                 key={i}
-                                className="w-2 h-2 rounded-full bg-primary/40 animate-bounce"
+                                className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce"
                                 style={{ animationDelay: `${i * 150}ms` }}
                               />
                             ))}
@@ -391,10 +430,12 @@ export default function TrainerPage() {
                     </div>
                   </ScrollArea>
 
-                  {/* Follow-up input */}
                   {evalMessages.length > 0 && !evaluateMutation.isPending && (
-                    <div className="border-t border-border p-3 flex gap-2">
-                      <Textarea
+                    <div
+                      className="p-3 flex gap-2"
+                      style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
+                    >
+                      <textarea
                         value={followUpInput}
                         onChange={(e) => setFollowUpInput(e.target.value)}
                         onKeyDown={(e) => {
@@ -404,17 +445,20 @@ export default function TrainerPage() {
                           }
                         }}
                         placeholder="Уточните или задайте вопрос по оценке..."
-                        className="flex-1 min-h-[60px] max-h-[120px] resize-none text-sm"
+                        className="flex-1 min-h-[56px] max-h-[120px] resize-none text-sm p-3 rounded-xl outline-none focus:ring-1 focus:ring-white/20 text-white placeholder:text-white/25"
+                        style={{
+                          background: "rgba(255,255,255,0.06)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                        }}
                         rows={2}
                       />
-                      <Button
+                      <button
                         onClick={handleFollowUp}
                         disabled={!followUpInput.trim()}
-                        size="sm"
-                        className="self-end"
+                        className="self-end px-4 py-2 rounded-xl text-sm font-bold bg-white text-black disabled:opacity-30 hover:bg-white/90 transition-all"
                       >
-                        Отправить
-                      </Button>
+                        →
+                      </button>
                     </div>
                   )}
                 </div>

@@ -42,90 +42,111 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ─── Light theme (fallback, rarely used) ─── */
 :root {
-  --primary: #06b6d4;
+  --radius: 0.75rem;
+  --primary: #0a0a0a;
   --primary-foreground: #ffffff;
-  --sidebar-primary: #06b6d4;
+  --sidebar-primary: #0a0a0a;
   --sidebar-primary-foreground: #ffffff;
-  --chart-1: #06b6d4;
-  --chart-2: #0ea5e9;
-  --chart-3: #3b82f6;
-  --chart-4: #8b5cf6;
-  --chart-5: #ec4899;
-  --radius: 0.65rem;
   --background: #ffffff;
-  --foreground: #0f172a;
-  --card: #f8fafc;
-  --card-foreground: #0f172a;
+  --foreground: #0a0a0a;
+  --card: #f5f5f5;
+  --card-foreground: #0a0a0a;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --secondary: #e2e8f0;
-  --secondary-foreground: #0f172a;
-  --muted: #cbd5e1;
-  --muted-foreground: #64748b;
-  --accent: #06b6d4;
-  --accent-foreground: #0f172a;
+  --popover-foreground: #0a0a0a;
+  --secondary: #f0f0f0;
+  --secondary-foreground: #0a0a0a;
+  --muted: #e5e5e5;
+  --muted-foreground: #737373;
+  --accent: #f0f0f0;
+  --accent-foreground: #0a0a0a;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #e2e8f0;
-  --input: #f1f5f9;
-  --ring: #06b6d4;
-  --sidebar: #f8fafc;
-  --sidebar-foreground: #0f172a;
-  --sidebar-accent: #06b6d4;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #e2e8f0;
-  --sidebar-ring: #06b6d4;
+  --border: #e5e5e5;
+  --input: #f5f5f5;
+  --ring: #0a0a0a;
+  --chart-1: #0a0a0a;
+  --chart-2: #404040;
+  --chart-3: #737373;
+  --chart-4: #a3a3a3;
+  --chart-5: #d4d4d4;
+  --sidebar: #f5f5f5;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-accent: #e5e5e5;
+  --sidebar-accent-foreground: #0a0a0a;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #0a0a0a;
 }
 
+/* ─── Dark theme — Revolut style ─── */
 .dark {
-  /* Primary: warm white — for main buttons, CTAs, active states */
-  --primary: #e2e8f0;
-  --primary-foreground: #0a0a0a;
-  --sidebar-primary: #e2e8f0;
-  --sidebar-primary-foreground: #0a0a0a;
-  /* Base: true black background */
-  --background: #0a0a0a;
-  --foreground: #f1f5f9;
-  /* Cards: very dark grey, not pure black — subtle separation */
-  --card: #141414;
-  --card-foreground: #f1f5f9;
-  --popover: #1a1a1a;
-  --popover-foreground: #f1f5f9;
-  /* Secondary: cool grey — for secondary buttons, tags, chips */
-  --secondary: #1e1e1e;
-  --secondary-foreground: #94a3b8;
-  /* Muted: dimmed elements */
-  --muted: #262626;
-  --muted-foreground: #94a3b8;
-  /* Accent: cool slate — for hover states, highlights */
-  --accent: #1e293b;
-  --accent-foreground: #e2e8f0;
+  --radius: 0.75rem;
+
+  /* Pure black base */
+  --background: #000000;
+  --foreground: #ffffff;
+
+  /* Primary: white — buttons, CTAs */
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #000000;
+
+  /* Cards: dark glass surface */
+  --card: rgba(255, 255, 255, 0.05);
+  --card-foreground: #ffffff;
+  --popover: #111111;
+  --popover-foreground: #ffffff;
+
+  /* Secondary: subtle surface */
+  --secondary: rgba(255, 255, 255, 0.08);
+  --secondary-foreground: #a3a3a3;
+
+  /* Muted: dimmed */
+  --muted: rgba(255, 255, 255, 0.06);
+  --muted-foreground: #737373;
+
+  /* Accent: glass hover */
+  --accent: rgba(255, 255, 255, 0.1);
+  --accent-foreground: #ffffff;
+
   --destructive: #f87171;
-  --destructive-foreground: #0a0a0a;
-  --border: #262626;
-  --input: #141414;
-  --ring: #e2e8f0;
-  --chart-1: #e2e8f0;
-  --chart-2: #94a3b8;
-  --chart-3: #64748b;
-  --chart-4: #475569;
-  --chart-5: #334155;
+  --destructive-foreground: #000000;
+
+  /* Borders: very subtle */
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.06);
+  --ring: rgba(255, 255, 255, 0.3);
+
+  --chart-1: #ffffff;
+  --chart-2: #a3a3a3;
+  --chart-3: #737373;
+  --chart-4: #525252;
+  --chart-5: #404040;
+
   /* Sidebar */
-  --sidebar: #0f0f0f;
-  --sidebar-foreground: #f1f5f9;
-  --sidebar-accent: #1e1e1e;
-  --sidebar-accent-foreground: #e2e8f0;
-  --sidebar-border: #262626;
-  --sidebar-ring: #e2e8f0;
+  --sidebar: #000000;
+  --sidebar-foreground: #ffffff;
+  --sidebar-accent: rgba(255, 255, 255, 0.08);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: rgba(255, 255, 255, 0.3);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    /* Force dark mode always */
+    color-scheme: dark;
+  }
   body {
     @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -138,27 +159,19 @@
   input[type="radio"]:not(:disabled) {
     @apply cursor-pointer;
   }
+
+  /* Smooth theme transitions */
+  body, header, aside, nav, main, section, div, button, a {
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.1s ease;
+  }
 }
 
 @layer components {
-  /**
-   * Custom container utility that centers content and adds responsive padding.
-   *
-   * This overrides Tailwind's default container behavior to:
-   * - Auto-center content (mx-auto)
-   * - Add responsive horizontal padding
-   * - Set max-width for large screens
-   *
-   * Usage: <div className="container">...</div>
-   *
-   * For custom widths, use max-w-* utilities directly:
-   * <div className="max-w-6xl mx-auto px-4">...</div>
-   */
   .container {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem; /* 16px - mobile padding */
+    padding-left: 1rem;
     padding-right: 1rem;
   }
 
@@ -169,16 +182,63 @@
 
   @media (min-width: 640px) {
     .container {
-      padding-left: 1.5rem; /* 24px - tablet padding */
+      padding-left: 1.5rem;
       padding-right: 1.5rem;
     }
   }
 
   @media (min-width: 1024px) {
     .container {
-      padding-left: 2rem; /* 32px - desktop padding */
+      padding-left: 2rem;
       padding-right: 2rem;
-      max-width: 1280px; /* Standard content width */
+      max-width: 1280px;
     }
+  }
+
+  /* ─── Revolut glass card ─── */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 1rem;
+  }
+
+  .glass-card-strong {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-radius: 1rem;
+  }
+
+  /* ─── Revolut display typography ─── */
+  .display-xl {
+    font-size: clamp(3rem, 10vw, 7rem);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: #ffffff;
+  }
+
+  .display-lg {
+    font-size: clamp(2rem, 6vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    color: #ffffff;
+  }
+
+  .display-md {
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+  }
+
+  /* ─── Subtle gradient glow (like Revolut phone glow) ─── */
+  .glow-radial {
+    background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(255,255,255,0.06) 0%, transparent 70%);
   }
 }
