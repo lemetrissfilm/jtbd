@@ -40,24 +40,33 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Custom semantic tokens for Revolut-style glass */
+  --color-glass-surface: var(--glass-surface);
+  --color-glass-border: var(--glass-border);
+  --color-glass-strong: var(--glass-strong);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-btn-primary-bg: var(--btn-primary-bg);
+  --color-btn-primary-fg: var(--btn-primary-fg);
 }
 
-/* ─── Light theme (fallback, rarely used) ─── */
+/* ─── Light theme ─── */
 :root {
   --radius: 0.75rem;
-  --primary: #0a0a0a;
-  --primary-foreground: #ffffff;
-  --sidebar-primary: #0a0a0a;
-  --sidebar-primary-foreground: #ffffff;
+
   --background: #ffffff;
   --foreground: #0a0a0a;
   --card: #f5f5f5;
   --card-foreground: #0a0a0a;
   --popover: #ffffff;
   --popover-foreground: #0a0a0a;
+  --primary: #0a0a0a;
+  --primary-foreground: #ffffff;
   --secondary: #f0f0f0;
   --secondary-foreground: #0a0a0a;
-  --muted: #e5e5e5;
+  --muted: #e8e8e8;
   --muted-foreground: #737373;
   --accent: #f0f0f0;
   --accent-foreground: #0a0a0a;
@@ -65,88 +74,90 @@
   --destructive-foreground: #ffffff;
   --border: #e5e5e5;
   --input: #f5f5f5;
-  --ring: #0a0a0a;
+  --ring: rgba(10,10,10,0.3);
   --chart-1: #0a0a0a;
   --chart-2: #404040;
   --chart-3: #737373;
   --chart-4: #a3a3a3;
   --chart-5: #d4d4d4;
-  --sidebar: #f5f5f5;
+  --sidebar: #f8f8f8;
   --sidebar-foreground: #0a0a0a;
-  --sidebar-accent: #e5e5e5;
+  --sidebar-primary: #0a0a0a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #efefef;
   --sidebar-accent-foreground: #0a0a0a;
   --sidebar-border: #e5e5e5;
-  --sidebar-ring: #0a0a0a;
+  --sidebar-ring: rgba(10,10,10,0.3);
+
+  /* Glass tokens — light */
+  --glass-surface: rgba(0,0,0,0.04);
+  --glass-border: rgba(0,0,0,0.1);
+  --glass-strong: rgba(0,0,0,0.08);
+  --text-primary: #0a0a0a;
+  --text-secondary: rgba(10,10,10,0.5);
+  --text-muted: rgba(10,10,10,0.35);
+  --btn-primary-bg: #0a0a0a;
+  --btn-primary-fg: #ffffff;
 }
 
 /* ─── Dark theme — Revolut style ─── */
 .dark {
   --radius: 0.75rem;
 
-  /* Pure black base */
   --background: #000000;
   --foreground: #ffffff;
-
-  /* Primary: white — buttons, CTAs */
-  --primary: #ffffff;
-  --primary-foreground: #000000;
-  --sidebar-primary: #ffffff;
-  --sidebar-primary-foreground: #000000;
-
-  /* Cards: dark glass surface */
-  --card: rgba(255, 255, 255, 0.05);
+  --card: rgba(255,255,255,0.05);
   --card-foreground: #ffffff;
   --popover: #111111;
   --popover-foreground: #ffffff;
-
-  /* Secondary: subtle surface */
-  --secondary: rgba(255, 255, 255, 0.08);
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: rgba(255,255,255,0.08);
   --secondary-foreground: #a3a3a3;
-
-  /* Muted: dimmed */
-  --muted: rgba(255, 255, 255, 0.06);
+  --muted: rgba(255,255,255,0.06);
   --muted-foreground: #737373;
-
-  /* Accent: glass hover */
-  --accent: rgba(255, 255, 255, 0.1);
+  --accent: rgba(255,255,255,0.1);
   --accent-foreground: #ffffff;
-
   --destructive: #f87171;
   --destructive-foreground: #000000;
-
-  /* Borders: very subtle */
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.06);
-  --ring: rgba(255, 255, 255, 0.3);
-
+  --border: rgba(255,255,255,0.1);
+  --input: rgba(255,255,255,0.06);
+  --ring: rgba(255,255,255,0.3);
   --chart-1: #ffffff;
   --chart-2: #a3a3a3;
   --chart-3: #737373;
   --chart-4: #525252;
   --chart-5: #404040;
-
-  /* Sidebar */
   --sidebar: #000000;
   --sidebar-foreground: #ffffff;
-  --sidebar-accent: rgba(255, 255, 255, 0.08);
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: rgba(255,255,255,0.08);
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-ring: rgba(255, 255, 255, 0.3);
+  --sidebar-border: rgba(255,255,255,0.08);
+  --sidebar-ring: rgba(255,255,255,0.3);
+
+  /* Glass tokens — dark */
+  --glass-surface: rgba(255,255,255,0.06);
+  --glass-border: rgba(255,255,255,0.1);
+  --glass-strong: rgba(255,255,255,0.1);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255,255,255,0.5);
+  --text-muted: rgba(255,255,255,0.35);
+  --btn-primary-bg: #ffffff;
+  --btn-primary-fg: #000000;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  html {
-    /* Force dark mode always */
-    color-scheme: dark;
-  }
   body {
     @apply bg-background text-foreground;
     font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.2s ease, color 0.15s ease;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -158,11 +169,6 @@
   input[type="checkbox"]:not(:disabled),
   input[type="radio"]:not(:disabled) {
     @apply cursor-pointer;
-  }
-
-  /* Smooth theme transitions */
-  body, header, aside, nav, main, section, div, button, a {
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.1s ease;
   }
 }
 
@@ -181,64 +187,31 @@
   }
 
   @media (min-width: 640px) {
-    .container {
-      padding-left: 1.5rem;
-      padding-right: 1.5rem;
-    }
+    .container { padding-left: 1.5rem; padding-right: 1.5rem; }
   }
-
   @media (min-width: 1024px) {
-    .container {
-      padding-left: 2rem;
-      padding-right: 2rem;
-      max-width: 1280px;
-    }
+    .container { padding-left: 2rem; padding-right: 2rem; max-width: 1280px; }
   }
 
-  /* ─── Revolut glass card ─── */
+  /* ─── Glass card utility ─── */
   .glass-card {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--glass-surface);
+    border: 1px solid var(--glass-border);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 1rem;
+    transition: background 0.2s ease, border-color 0.2s ease;
   }
 
-  .glass-card-strong {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
+  /* ─── Primary button utility ─── */
+  .btn-primary {
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-fg);
     border-radius: 1rem;
-  }
-
-  /* ─── Revolut display typography ─── */
-  .display-xl {
-    font-size: clamp(3rem, 10vw, 7rem);
-    font-weight: 800;
-    line-height: 0.95;
-    letter-spacing: -0.03em;
-    color: #ffffff;
-  }
-
-  .display-lg {
-    font-size: clamp(2rem, 6vw, 4.5rem);
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -0.025em;
-    color: #ffffff;
-  }
-
-  .display-md {
-    font-size: clamp(1.5rem, 4vw, 2.5rem);
     font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-    color: #ffffff;
+    transition: opacity 0.15s ease, transform 0.1s ease;
   }
-
-  /* ─── Subtle gradient glow (like Revolut phone glow) ─── */
-  .glow-radial {
-    background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(255,255,255,0.06) 0%, transparent 70%);
-  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:disabled { opacity: 0.3; }
 }

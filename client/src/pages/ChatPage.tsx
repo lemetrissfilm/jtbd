@@ -44,42 +44,42 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
       <header
-        className="flex items-center justify-between px-4 py-3"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+        className="flex items-center justify-between px-4 py-3 bg-background"
+        style={{ borderBottom: "1px solid var(--border)" }}
       >
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/book")}
-            className="flex items-center gap-1.5 text-white/40 hover:text-white transition-colors text-sm"
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
           >
             <ArrowLeft className="w-4 h-4" />
             К книге
           </button>
-          <span className="text-white/15">|</span>
+          <span className="text-border opacity-60">|</span>
           <div className="flex items-center gap-2">
             <div
               className="w-7 h-7 rounded-xl flex items-center justify-center"
-              style={{ background: "rgba(255,255,255,0.1)" }}
+              style={{ background: "var(--glass-surface)", border: "1px solid var(--glass-border)" }}
             >
-              <Sparkles className="w-3.5 h-3.5 text-white" />
+              <Sparkles className="w-3.5 h-3.5 text-foreground" />
             </div>
-            <span className="font-bold text-sm tracking-tight">AI-ассистент</span>
+            <span className="font-bold text-sm tracking-tight text-foreground">AI-ассистент</span>
           </div>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={() => navigate("/trainer")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-white/40 hover:text-white hover:bg-white/[0.08] transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
           >
             <CheckCircle className="w-3.5 h-3.5" />
             Тренажёр
           </button>
           <button
             onClick={toggleTheme}
-            className="p-1.5 rounded-full text-white/30 hover:text-white hover:bg-white/[0.08] transition-all"
+            className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
           >
             {theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
           </button>
@@ -88,7 +88,7 @@ export default function ChatPage() {
 
       {/* Main content */}
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-4 flex flex-col gap-3">
-        <p className="text-xs text-white/30">
+        <p className="text-xs text-muted-foreground">
           AI знает всё содержание книги и может объяснить любую концепцию Synthetic JTBD
         </p>
         <AIChatBox

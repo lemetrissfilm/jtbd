@@ -5,7 +5,7 @@ import { Moon, Sun, BookOpen, MessageSquare, CheckCircle, ArrowRight } from "luc
 
 export default function Home() {
   const [, navigate] = useLocation();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, switchable } = useTheme();
   const [hasStarted, setHasStarted] = useState(false);
 
   useEffect(() => {
@@ -13,42 +13,39 @@ export default function Home() {
     setHasStarted(!!saved);
   }, []);
 
-  const handleStart = () => {
-    navigate("/book");
-  };
-
   return (
-    <div className="min-h-screen bg-black text-white overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* ── Header ── */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4">
-        <span className="text-sm font-semibold tracking-wide text-white/60">
-          Synthetic <span className="text-white font-bold">JTBD</span>
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-background/80 backdrop-blur-md"
+        style={{ borderBottom: "1px solid var(--border)" }}>
+        <span className="text-sm font-semibold tracking-wide text-muted-foreground">
+          Synthetic <span className="text-foreground font-bold">JTBD</span>
         </span>
         <nav className="flex items-center gap-1">
           <button
             onClick={() => navigate("/chat")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-white/60 hover:text-white hover:bg-white/10 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
           >
             <MessageSquare className="w-3.5 h-3.5" />
             AI-чат
           </button>
           <button
             onClick={() => navigate("/trainer")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-white/60 hover:text-white hover:bg-white/10 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
           >
             <CheckCircle className="w-3.5 h-3.5" />
             Тренажёр
           </button>
           <button
             onClick={() => navigate("/book")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-white/60 hover:text-white hover:bg-white/10 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
           >
             <BookOpen className="w-3.5 h-3.5" />
             Книга
           </button>
           <button
             onClick={toggleTheme}
-            className="ml-1 p-1.5 rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-all"
+            className="ml-1 p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
           >
             {theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
           </button>
@@ -57,25 +54,24 @@ export default function Home() {
 
       {/* ── Hero ── */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-20 pb-16">
-        {/* Subtle radial glow from top */}
+        {/* Subtle radial glow */}
         <div
           className="pointer-events-none absolute inset-0"
           style={{
-            background:
-              "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255,255,255,0.07) 0%, transparent 60%)",
+            background: "radial-gradient(ellipse 80% 50% at 50% -10%, var(--glass-strong) 0%, transparent 60%)",
           }}
         />
 
         {/* Top label */}
-        <div className="mb-8 flex items-center gap-2">
-          <span className="text-xs font-semibold tracking-[0.2em] uppercase text-white/40">
+        <div className="mb-8">
+          <span className="text-xs font-semibold tracking-[0.2em] uppercase text-muted-foreground">
             Методология
           </span>
         </div>
 
-        {/* Main headline — Revolut-style massive type */}
+        {/* Main headline */}
         <h1
-          className="text-center font-black leading-none tracking-tight mb-4"
+          className="text-center font-black text-foreground leading-none tracking-tight mb-4"
           style={{
             fontSize: "clamp(3.5rem, 14vw, 9rem)",
             letterSpacing: "-0.035em",
@@ -84,51 +80,43 @@ export default function Home() {
         >
           Synthetic
           <br />
-          <span className="text-white/90">JTBD</span>
+          JTBD
         </h1>
 
         {/* Subheadline */}
         <p
-          className="text-center font-semibold text-white/50 mb-12 max-w-sm"
+          className="text-center font-semibold text-muted-foreground mb-12 max-w-sm"
           style={{ fontSize: "clamp(1rem, 2.5vw, 1.25rem)", letterSpacing: "-0.01em" }}
         >
           Понимайте пользователей через действия, а не слова
         </p>
 
-        {/* Glass notification card — Revolut signature element */}
+        {/* Glass notification card */}
         <div
-          className="mb-12 flex items-center gap-3 px-4 py-3 rounded-2xl"
-          style={{
-            background: "rgba(255,255,255,0.08)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-            maxWidth: "340px",
-            width: "100%",
-          }}
+          className="mb-12 flex items-center gap-3 px-4 py-3 rounded-2xl glass-card"
+          style={{ maxWidth: "340px", width: "100%" }}
         >
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: "rgba(255,255,255,0.15)" }}
+            style={{ background: "var(--glass-strong)" }}
           >
-            <BookOpen className="w-5 h-5 text-white" />
+            <BookOpen className="w-5 h-5 text-foreground" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white leading-tight">
+            <p className="text-sm font-semibold text-foreground leading-tight">
               {hasStarted ? "Продолжить чтение" : "62 главы · 12 частей"}
             </p>
-            <p className="text-xs text-white/50 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {hasStarted ? "Вы уже начали — продолжайте" : "Полное руководство по методологии"}
             </p>
           </div>
-          <span className="text-xs text-white/40 flex-shrink-0">→</span>
+          <span className="text-xs text-muted-foreground flex-shrink-0">→</span>
         </div>
 
         {/* CTA button */}
         <button
-          onClick={handleStart}
-          className="group flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-black text-base transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-          style={{ background: "#ffffff", letterSpacing: "-0.01em" }}
+          onClick={() => navigate("/book")}
+          className="group btn-primary flex items-center gap-3 px-8 py-4 text-base"
         >
           {hasStarted ? "Продолжить чтение" : "Начать чтение"}
           <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
@@ -138,14 +126,14 @@ export default function Home() {
         <div className="mt-6 flex items-center gap-6">
           <button
             onClick={() => navigate("/chat")}
-            className="text-sm text-white/40 hover:text-white/70 transition-colors font-medium"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
           >
             AI-чат по книге
           </button>
-          <span className="text-white/20">·</span>
+          <span className="text-muted-foreground opacity-40">·</span>
           <button
             onClick={() => navigate("/trainer")}
-            className="text-sm text-white/40 hover:text-white/70 transition-colors font-medium"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
           >
             Тренажёр артефактов
           </button>
@@ -178,17 +166,13 @@ export default function Home() {
             <button
               key={item.title}
               onClick={item.action}
-              className="group text-left p-5 rounded-2xl transition-all duration-200 hover:bg-white/[0.07] active:scale-[0.98]"
-              style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}
+              className="group text-left p-5 rounded-2xl glass-card hover:bg-accent/50 transition-all active:scale-[0.98]"
             >
-              <div className="text-white/50 mb-3 group-hover:text-white/80 transition-colors">
+              <div className="text-muted-foreground mb-3 group-hover:text-foreground transition-colors">
                 {item.icon}
               </div>
-              <p className="font-bold text-white text-sm mb-1">{item.title}</p>
-              <p className="text-xs text-white/40 leading-relaxed">{item.desc}</p>
+              <p className="font-bold text-foreground text-sm mb-1">{item.title}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
             </button>
           ))}
         </div>
@@ -196,7 +180,7 @@ export default function Home() {
 
       {/* ── Footer ── */}
       <footer className="px-6 pb-8 text-center">
-        <p className="text-xs text-white/20">
+        <p className="text-xs text-muted-foreground opacity-50">
           Synthetic JTBD · Дмитрий Михайлов
         </p>
       </footer>
