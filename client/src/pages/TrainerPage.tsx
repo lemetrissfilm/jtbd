@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, CheckCircle, MessageSquare, Sparkles, ChevronDown } from "lucide-react";
+import { ArrowLeft, CheckCircle, MessageSquare, Sparkles } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { trpc } from "@/lib/trpc";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -100,8 +100,6 @@ export default function TrainerPage() {
   const [selectedType, setSelectedType] = useState("job_story");
   const [evalMessages, setEvalMessages] = useState<EvalMessage[]>([]);
   const [followUpInput, setFollowUpInput] = useState("");
-  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
-
   const evaluateMutation = trpc.ai.evaluate.useMutation({
     onSuccess: (data) => {
       const content = typeof data.content === "string" ? data.content : "Оценка получена.";
@@ -206,48 +204,31 @@ export default function TrainerPage() {
               </p>
             </div>
 
-            {/* Type selector */}
-            <div className="relative">
-              <label className="text-xs font-medium text-muted-foreground mb-1.5 block uppercase tracking-wide">
+            {/* Type selector — tiles */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block uppercase tracking-wide">
                 Тип артефакта
               </label>
-              <button
-                onClick={() => setShowTypeDropdown(!showTypeDropdown)}
-                className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl text-sm font-medium text-foreground transition-all"
-                style={{
-                  background: "var(--glass-surface)",
-                  border: "1px solid var(--glass-border)",
-                }}
-              >
-                <span>{selectedTypeLabel}</span>
-                <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", showTypeDropdown && "rotate-180")} />
-              </button>
-              {showTypeDropdown && (
-                <div
-                  className="absolute top-full left-0 right-0 mt-1 rounded-2xl overflow-hidden z-10"
-                  style={{
-                    background: "var(--popover)",
-                    border: "1px solid var(--border)",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-                  }}
-                >
-                  {ARTIFACT_TYPES.map((type) => (
-                    <button
-                      key={type.value}
-                      onClick={() => {
-                        setSelectedType(type.value);
-                        setShowTypeDropdown(false);
-                      }}
-                      className={cn(
-                        "w-full text-left px-4 py-2.5 text-sm transition-colors text-foreground hover:bg-accent",
-                        selectedType === type.value && "font-semibold bg-accent"
-                      )}
-                    >
-                      {type.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div className="flex flex-wrap gap-2">
+                {ARTIFACT_TYPES.map((type) => (
+                  <button
+                    key={type.value}
+                    onClick={() => setSelectedType(type.value)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-xl text-xs font-medium transition-all active:scale-95",
+                      selectedType === type.value
+                        ? "bg-foreground text-background font-bold"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    style={{
+                      background: selectedType === type.value ? "var(--foreground)" : "var(--glass-surface)",
+                      border: selectedType === type.value ? "1px solid transparent" : "1px solid var(--glass-border)",
+                    }}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Textarea */}
