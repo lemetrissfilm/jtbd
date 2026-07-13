@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { ChevronDown, ChevronUp, Search, Home, Menu, X, Moon, Sun, MessageSquare, CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -23,6 +23,8 @@ export default function BookPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [readChapters, setReadChapters] = useState<Set<number>>(new Set());
+  const contentScrollRef = useRef<HTMLDivElement>(null);
+  const prevChapterIndexRef = useRef(0);
 
   useEffect(() => {
     const saved = localStorage.getItem('readChapters');
@@ -80,9 +82,21 @@ export default function BookPage() {
     setExpandedParts(next);
   };
 
+  const scrollContent = useCallback((toTop: boolean) => {
+    requestAnimationFrame(() => {
+      const el = contentScrollRef.current;
+      if (!el) return;
+      el.scrollTo({ top: toTop ? 0 : el.scrollHeight, behavior: 'smooth' });
+    });
+  }, []);
+
   const handleChapterClick = (index: number) => {
+    const goingForward = index > currentChapterIndex;
+    prevChapterIndexRef.current = currentChapterIndex;
     setCurrentChapterIndex(index);
     setMobileMenuOpen(false);
+    // Scroll top when going forward, bottom when going back
+    setTimeout(() => scrollContent(goingForward), 30);
   };
 
   return (
@@ -252,7 +266,7 @@ export default function BookPage() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div ref={contentScrollRef} className="flex-1 overflow-y-auto">
           <div className="max-w-3xl mx-auto px-6 lg:px-10 py-12">
             <article className="prose dark:prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-h1:text-4xl prose-h2:text-2xl prose-h3:text-xl prose-p:leading-relaxed">
               <h1 className="text-3xl lg:text-4xl font-black tracking-tight text-foreground mb-8" style={{ letterSpacing: '-0.025em' }}>
@@ -267,7 +281,7 @@ export default function BookPage() {
               style={{ borderTop: "1px solid var(--border)" }}
             >
               <button
-                onClick={() => setCurrentChapterIndex(i => Math.max(0, i - 1))}
+                onClick={() => handleChapterClick(Math.max(0, currentChapterIndex - 1))}
                 disabled={currentChapterIndex === 0}
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium text-foreground transition-all disabled:opacity-20 hover:bg-accent"
                 style={{ border: "1px solid var(--border)" }}
@@ -276,7 +290,7 @@ export default function BookPage() {
                 Предыдущая
               </button>
               <button
-                onClick={() => setCurrentChapterIndex(i => Math.min(chaptersData.length - 1, i + 1))}
+                onClick={() => handleChapterClick(Math.min(chaptersData.length - 1, currentChapterIndex + 1))}
                 disabled={currentChapterIndex === chaptersData.length - 1}
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold btn-primary disabled:opacity-20"
               >
