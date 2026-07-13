@@ -295,15 +295,7 @@ export default function TrainerPage() {
           </div>
 
           {/* Right: Feedback panel */}
-          <div className="flex flex-col gap-4">
-            <div
-              className="flex-1 rounded-2xl overflow-hidden flex flex-col"
-              style={{
-                background: "var(--glass-surface)",
-                border: "1px solid var(--glass-border)",
-                minHeight: "400px",
-              }}
-            >
+          <div className="flex flex-col gap-4 flex-1 overflow-hidden">
               {evalMessages.length > 0 && (
                 <div className="flex flex-col flex-1 overflow-hidden">
                   <ScrollArea className="flex-1 p-4">
@@ -412,7 +404,6 @@ export default function TrainerPage() {
                   )}
                 </div>
               )}
-            </div>
           </div>
         </div>
       </main>
