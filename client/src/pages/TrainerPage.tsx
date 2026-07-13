@@ -304,33 +304,7 @@ export default function TrainerPage() {
                 minHeight: "400px",
               }}
             >
-              {evalMessages.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center gap-5 p-8 text-center">
-                  <div
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                    style={{ background: "var(--glass-strong)" }}
-                  >
-                    <CheckCircle className="w-7 h-7 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-foreground mb-1">Готов к проверке</p>
-                    <p className="text-sm text-muted-foreground">
-                      Напишите артефакт слева и нажмите «Проверить»
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 w-full max-w-xs">
-                    {["Соответствие формату", "Глубина инсайтов", "Actionability", "Точность формулировок"].map((c) => (
-                      <div
-                        key={c}
-                        className="px-3 py-2 rounded-xl text-xs text-muted-foreground"
-                        style={{ background: "var(--glass-surface)", border: "1px solid var(--glass-border)" }}
-                      >
-                        {c}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
+              {evalMessages.length > 0 && (
                 <div className="flex flex-col flex-1 overflow-hidden">
                   <ScrollArea className="flex-1 p-4">
                     <div className="space-y-3">
