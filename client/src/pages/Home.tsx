@@ -92,17 +92,28 @@ export default function Home() {
         </p>
 
         {/* Glass notification card */}
-        <div
-          className="mb-12 flex items-center gap-3 px-4 py-3 rounded-2xl glass-card"
-          style={{ maxWidth: "340px", width: "100%" }}
+        <button
+          onClick={() => navigate("/book")}
+          className="mb-12 flex items-center gap-3 px-4 py-3 rounded-2xl glass-card group transition-all duration-200 active:scale-[0.98]"
+          style={{
+            maxWidth: "340px",
+            width: "100%",
+            boxShadow: "none",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 1px var(--glass-border), 0 0 24px 4px rgba(255,255,255,0.08)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.boxShadow = "none";
+          }}
         >
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors group-hover:bg-accent"
             style={{ background: "var(--glass-strong)" }}
           >
             <BookOpen className="w-5 h-5 text-foreground" />
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 text-left">
             <p className="text-sm font-semibold text-foreground leading-tight">
               {hasStarted ? "Продолжить чтение" : "62 главы · 12 частей"}
             </p>
@@ -110,8 +121,7 @@ export default function Home() {
               {hasStarted ? "Вы уже начали — продолжайте" : "Полное руководство по методологии"}
             </p>
           </div>
-          <span className="text-xs text-muted-foreground flex-shrink-0">→</span>
-        </div>
+        </button>
 
         {/* CTA button */}
         <button
