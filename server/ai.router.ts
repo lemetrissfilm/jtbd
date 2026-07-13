@@ -96,6 +96,41 @@ export const aiRouter = router({
       return { content };
     }),
 
+  // Generate a fresh example artifact for the trainer
+  generateExample: publicProcedure
+    .input(
+      z.object({
+        artifactType: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const typeLabels: Record<string, string> = {
+        job_story: "Job Story",
+        job_chain: "Job Chain",
+        jtbd_statement: "JTBD Statement",
+        synthetic_persona: "Синтетический персонаж",
+        interview_guide: "Гайд для интервью",
+        job_map: "Job Map",
+        opportunity_score: "Opportunity Score",
+        other: "Артефакт",
+      };
+      const label = typeLabels[input.artifactType] || input.artifactType;
+      const prompt = `Сгенерируй реалистичный пример артефакта типа «${label}» по методологии Synthetic JTBD.
+Каждый раз придумывай новый контекст: другой продукт, другого персонажа, другую ситуацию.
+Выбери случайный домен из: финтех, edtech, healthtech, e-commerce, B2B SaaS, медиа, транспорт, HR-tech.
+Верни только сам артефакт без пояснений и без заголовка «Пример:».
+Артефакт должен быть реалистичным, детальным и соответствовать критериям методологии.`;
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system" as const, content: TRAINER_SYSTEM_PROMPT },
+          { role: "user" as const, content: prompt },
+        ],
+      });
+      const content = response.choices?.[0]?.message?.content ?? "";
+      return { content };
+    }),
+
   // Trainer endpoint - evaluate JTBD artifacts
   evaluate: publicProcedure
     .input(

@@ -142,8 +142,18 @@ export default function TrainerPage() {
     setFollowUpInput("");
   };
 
+  const generateExampleMutation = trpc.ai.generateExample.useMutation({
+    onSuccess: (data) => {
+      setArtifact(typeof data.content === "string" ? data.content : ARTIFACT_EXAMPLES[selectedType] || "");
+    },
+    onError: () => {
+      // Fallback to static example on error
+      setArtifact(ARTIFACT_EXAMPLES[selectedType] || "");
+    },
+  });
+
   const loadExample = () => {
-    setArtifact(ARTIFACT_EXAMPLES[selectedType] || "");
+    generateExampleMutation.mutate({ artifactType: selectedType });
   };
 
   const selectedTypeLabel = ARTIFACT_TYPES.find(t => t.value === selectedType)?.label || "Job Story";
@@ -239,9 +249,10 @@ export default function TrainerPage() {
                 </label>
                 <button
                   onClick={loadExample}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  disabled={generateExampleMutation.isPending}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                 >
-                  Загрузить пример →
+                  {generateExampleMutation.isPending ? "Генерирую..." : "Сгенерировать пример →"}
                 </button>
               </div>
               <textarea
@@ -285,13 +296,6 @@ export default function TrainerPage() {
 
           {/* Right: Feedback panel */}
           <div className="flex flex-col gap-4">
-            <div>
-              <h2 className="text-lg font-black tracking-tight text-foreground">Обратная связь AI</h2>
-              <p className="text-xs text-muted-foreground mt-1">
-                AI проверит артефакт по критериям методологии и даст рекомендации
-              </p>
-            </div>
-
             <div
               className="flex-1 rounded-2xl overflow-hidden flex flex-col"
               style={{
