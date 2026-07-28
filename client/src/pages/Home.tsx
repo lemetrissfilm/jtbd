@@ -1,23 +1,75 @@
 import { useLocation } from "wouter";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Moon, Sun, BookOpen, MessageSquare, CheckCircle, ArrowRight } from "lucide-react";
+import { Moon, Sun, BookOpen, MessageSquare, CheckCircle, ArrowRight, Send, Loader2 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+
+const SUGGESTIONS = [
+  "Что такое Job Story?",
+  "Как создать нейроперсону?",
+  "Чем JTBD лучше персон?",
+  "Что такое Context Canvas?",
+  "Как считать Opportunity Score?",
+  "С чего начать исследование?",
+];
 
 export default function Home() {
   const [, navigate] = useLocation();
-  const { theme, toggleTheme, switchable } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const [hasStarted, setHasStarted] = useState(false);
+
+  // Chat state
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<{ role: "user" | "assistant"; text: string }[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const chatMutation = trpc.ai.chat.useMutation();
 
   useEffect(() => {
     const saved = localStorage.getItem("jtbd-last-chapter");
     setHasStarted(!!saved);
   }, []);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || isLoading) return;
+    const userMsg = text.trim();
+    setInput("");
+    setMessages((prev) => [...prev, { role: "user", text: userMsg }]);
+    setIsLoading(true);
+    try {
+      const res = await chatMutation.mutateAsync({
+        messages: [{ role: "user" as const, content: userMsg }],
+      });
+      const rawContent = res?.content;
+      const reply = typeof rawContent === "string" ? rawContent : "Не удалось получить ответ.";
+      setMessages((prev) => [...prev, { role: "assistant", text: reply }]);
+    } catch {
+      setMessages((prev) => [...prev, { role: "assistant", text: "Произошла ошибка. Попробуйте ещё раз." }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(input);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* ── Header ── */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-background/80 backdrop-blur-md"
-        style={{ borderBottom: "1px solid var(--border)" }}>
+      <header
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-background/80 backdrop-blur-md"
+        style={{ borderBottom: "1px solid var(--border)" }}
+      >
         <span className="text-sm font-semibold tracking-wide text-muted-foreground">
           Synthetic <span className="text-foreground font-bold">JTBD</span>
         </span>
@@ -54,11 +106,12 @@ export default function Home() {
 
       {/* ── Hero ── */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-20 pb-16">
-        {/* Subtle radial glow */}
+        {/* Radial glow */}
         <div
           className="pointer-events-none absolute inset-0"
           style={{
-            background: "radial-gradient(ellipse 80% 50% at 50% -10%, var(--glass-strong) 0%, transparent 60%)",
+            background:
+              "radial-gradient(ellipse 80% 50% at 50% -10%, var(--glass-strong) 0%, transparent 60%)",
           }}
         />
 
@@ -85,53 +138,94 @@ export default function Home() {
 
         {/* Subheadline */}
         <p
-          className="text-center font-semibold text-muted-foreground mb-12 max-w-sm"
+          className="text-center font-semibold text-muted-foreground mb-10 max-w-sm"
           style={{ fontSize: "clamp(1rem, 2.5vw, 1.25rem)", letterSpacing: "-0.01em" }}
         >
           Понимайте пользователей через действия, а не слова
         </p>
 
-        {/* Glass notification card */}
-        <button
-          onClick={() => navigate("/book")}
-          className="mb-12 flex items-center gap-3 px-4 py-3 rounded-2xl glass-card group transition-all duration-200 active:scale-[0.98]"
-          style={{
-            maxWidth: "340px",
-            width: "100%",
-            boxShadow: "none",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 1px var(--glass-border), 0 0 24px 4px rgba(255,255,255,0.08)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.boxShadow = "none";
-          }}
-        >
+        {/* ── Inline AI Chat ── */}
+        <div className="w-full max-w-lg flex flex-col gap-3">
+          {/* Message bubbles */}
+          {messages.length > 0 && (
+            <div className="flex flex-col gap-2 max-h-64 overflow-y-auto px-1">
+              {messages.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                      msg.role === "user"
+                        ? "bg-foreground text-background font-medium rounded-br-sm"
+                        : "glass-card text-foreground rounded-bl-sm"
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="glass-card px-4 py-2.5 rounded-2xl rounded-bl-sm flex items-center gap-2">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Думаю...</span>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+
+          {/* Suggestion bubbles — show only when no messages yet */}
+          {messages.length === 0 && (
+            <div className="flex flex-wrap gap-2 justify-center">
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => sendMessage(s)}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium glass-card text-muted-foreground hover:text-foreground hover:bg-accent transition-all active:scale-[0.97]"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Input row */}
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors group-hover:bg-accent"
-            style={{ background: "var(--glass-strong)" }}
+            className="flex items-center gap-2 px-4 py-3 rounded-2xl glass-card"
+            style={{ border: "1px solid var(--glass-border)" }}
           >
-            <BookOpen className="w-5 h-5 text-foreground" />
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Спросите что-нибудь о Synthetic JTBD..."
+              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+              disabled={isLoading}
+            />
+            <button
+              onClick={() => sendMessage(input)}
+              disabled={!input.trim() || isLoading}
+              className="p-1.5 rounded-xl bg-foreground text-background disabled:opacity-30 hover:opacity-80 transition-all active:scale-95 flex-shrink-0"
+            >
+              <Send className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <div className="flex-1 min-w-0 text-left">
-            <p className="text-sm font-semibold text-foreground leading-tight">
-              {hasStarted ? "Продолжить чтение" : "62 главы · 12 частей"}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {hasStarted ? "Вы уже начали — продолжайте" : "Полное руководство по методологии"}
-            </p>
-          </div>
-        </button>
 
-        {/* CTA button */}
-        <button
-          onClick={() => navigate("/book")}
-          className="group btn-primary flex items-center gap-3 px-8 py-4 text-base"
-        >
-          {hasStarted ? "Продолжить чтение" : "Начать чтение"}
-          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-        </button>
-
+          {/* Book link below chat */}
+          <button
+            onClick={() => navigate("/book")}
+            className="self-center flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            {hasStarted ? "Продолжить чтение книги" : "Читать книгу — 62 главы · 12 частей"}
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
       </section>
 
       {/* ── Features strip ── */}
