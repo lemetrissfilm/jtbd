@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, CheckCircle, Sparkles, Sun, Moon } from "lucide-react";
+import { ArrowLeft, CheckCircle, Sparkles, Sun, Moon, Compass, ShieldAlert } from "lucide-react";
 import { AIChatBox, type Message } from "@/components/AIChatBox";
 import { trpc } from "@/lib/trpc";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -78,6 +78,13 @@ export default function ChatPage() {
             Тренажёр
           </button>
           <button
+            onClick={() => navigate("/research")}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+          >
+            <Compass className="w-3.5 h-3.5" />
+            Исследование
+          </button>
+          <button
             onClick={toggleTheme}
             className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
           >
@@ -88,9 +95,15 @@ export default function ChatPage() {
 
       {/* Main content */}
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-4 flex flex-col gap-3">
-        <p className="text-xs text-muted-foreground">
-          AI знает всё содержание книги и может объяснить любую концепцию Synthetic JTBD
-        </p>
+        <div className="flex flex-col gap-1 rounded-2xl border border-border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-muted-foreground">
+            AI знает содержание книги и помогает формулировать гипотезы, вопросы и артефакты.
+          </p>
+          <button onClick={() => navigate("/research")} className="flex items-center gap-1.5 text-xs font-semibold text-foreground transition-colors hover:text-muted-foreground">
+            <ShieldAlert className="w-3.5 h-3.5" />
+            Гипотеза ≠ факт
+          </button>
+        </div>
         <AIChatBox
           messages={messages}
           onSendMessage={handleSendMessage}

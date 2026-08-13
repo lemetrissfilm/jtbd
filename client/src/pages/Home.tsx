@@ -1,8 +1,9 @@
 import { useLocation } from "wouter";
 import { useEffect, useState, useRef } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Moon, Sun, BookOpen, MessageSquare, CheckCircle, ArrowRight, Send, Loader2 } from "lucide-react";
+import { Moon, Sun, BookOpen, MessageSquare, CheckCircle, ArrowRight, Send, Loader2, Compass } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import chaptersData from "@/data/chapters_full.json";
 
 const SUGGESTIONS = [
   "Что такое Job Story?",
@@ -26,6 +27,8 @@ export default function Home() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const chatMutation = trpc.ai.chat.useMutation();
+  const chapterCount = chaptersData.filter((chapter) => !chapter.title.includes("ЧАСТЬ")).length;
+  const partCount = chaptersData.filter((chapter) => chapter.title.includes("ЧАСТЬ")).length;
 
   useEffect(() => {
     const saved = localStorage.getItem("jtbd-last-chapter");
@@ -87,6 +90,13 @@ export default function Home() {
           >
             <CheckCircle className="w-3.5 h-3.5" />
             Тренажёр
+          </button>
+          <button
+            onClick={() => navigate("/research")}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+          >
+            <Compass className="w-3.5 h-3.5" />
+            Исследование
           </button>
           <button
             onClick={() => navigate("/book")}
@@ -222,7 +232,7 @@ export default function Home() {
             className="self-center flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
           >
             <BookOpen className="w-3.5 h-3.5" />
-            {hasStarted ? "Продолжить чтение книги" : "Читать книгу — 62 главы · 12 частей"}
+            {hasStarted ? "Продолжить чтение книги" : `Читать книгу — ${chapterCount} главы · ${partCount} частей`}
             <ArrowRight className="w-3 h-3" />
           </button>
         </div>
@@ -235,7 +245,7 @@ export default function Home() {
             {
               icon: <BookOpen className="w-5 h-5" />,
               title: "Полная книга",
-              desc: "62 главы о методологии Synthetic JTBD",
+              desc: `${chapterCount} главы о методологии Synthetic JTBD`,
               action: () => navigate("/book"),
             },
             {
@@ -249,6 +259,12 @@ export default function Home() {
               title: "Тренажёр",
               desc: "Проверяйте свои артефакты JTBD",
               action: () => navigate("/trainer"),
+            },
+            {
+              icon: <Compass className="w-5 h-5" />,
+              title: "Research Navigator",
+              desc: "Соберите исследование от решения до валидации",
+              action: () => navigate("/research"),
             },
           ].map((item) => (
             <button

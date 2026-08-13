@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, CheckCircle, MessageSquare, Sparkles } from "lucide-react";
+import { ArrowLeft, CheckCircle, MessageSquare, Sparkles, Compass, ShieldAlert } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { trpc } from "@/lib/trpc";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -193,6 +193,13 @@ export default function TrainerPage() {
             AI-чат
           </button>
           <button
+            onClick={() => navigate("/research")}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+          >
+            <Compass className="w-3.5 h-3.5" />
+            Исследование
+          </button>
+          <button
             onClick={toggleTheme}
             className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
           >
@@ -210,8 +217,12 @@ export default function TrainerPage() {
             <div>
               <h2 className="text-lg font-black tracking-tight text-foreground">Ваш артефакт</h2>
               <p className="text-xs text-muted-foreground mt-1">
-                Напишите или вставьте артефакт JTBD — AI проверит его по критериям методологии
+                Напишите или вставьте артефакт JTBD — AI проверит структуру и подскажет, что необходимо подтвердить реальными данными.
               </p>
+              <button onClick={() => navigate("/research")} className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground">
+                <ShieldAlert className="w-3.5 h-3.5" />
+                Открыть контур проверки гипотез
+              </button>
             </div>
 
             {/* Type selector — tiles */}

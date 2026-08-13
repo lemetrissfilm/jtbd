@@ -8,6 +8,7 @@ import BookPage from "./pages/BookPage";
 import Home from "./pages/Home";
 import ChatPage from "./pages/ChatPage";
 import TrainerPage from "./pages/TrainerPage";
+import ResearchNavigatorPage from "./pages/ResearchNavigatorPage";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/book" component={BookPage} />
       <Route path="/chat" component={ChatPage} />
       <Route path="/trainer" component={TrainerPage} />
+      <Route path="/research" component={ResearchNavigatorPage} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

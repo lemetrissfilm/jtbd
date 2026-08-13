@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'wouter';
-import { ChevronDown, ChevronUp, Search, Home, Menu, X, Moon, Sun, MessageSquare, CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, Home, Menu, X, Moon, Sun, MessageSquare, CheckCircle, ArrowLeft, ArrowRight, Clock, Compass } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import chaptersData from '@/data/chapters_full.json';
 import { Streamdown } from 'streamdown';
@@ -15,10 +15,17 @@ interface Part {
   chapters: Chapter[];
 }
 
+const readableChapterIndexes = chaptersData.reduce<number[]>((indexes, chapter, index) => {
+  if (!chapter.title.includes('ЧАСТЬ')) indexes.push(index);
+  return indexes;
+}, []);
+
+const getReadingMinutes = (content: string) => Math.max(1, Math.ceil(content.trim().split(/\s+/).length / 220));
+
 export default function BookPage() {
   const [, navigate] = useLocation();
   const { theme, toggleTheme } = useTheme();
-  const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
+  const [currentChapterIndex, setCurrentChapterIndex] = useState(readableChapterIndexes[0] ?? 0);
   const [expandedParts, setExpandedParts] = useState<Set<number>>(new Set([0]));
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -39,7 +46,7 @@ export default function BookPage() {
     const lastRead = localStorage.getItem('lastReadChapter');
     if (lastRead) {
       const index = parseInt(lastRead);
-      if (index >= 0 && index < chaptersData.length) setCurrentChapterIndex(index);
+      if (readableChapterIndexes.includes(index)) setCurrentChapterIndex(index);
     }
   }, []);
 
@@ -74,6 +81,10 @@ export default function BookPage() {
   })).filter(part => part.chapters.length > 0 || part.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const currentChapter = chaptersData[currentChapterIndex];
+  const currentReadablePosition = Math.max(0, readableChapterIndexes.indexOf(currentChapterIndex));
+  const readingProgress = ((currentReadablePosition + 1) / readableChapterIndexes.length) * 100;
+  const previousChapterIndex = readableChapterIndexes[Math.max(0, currentReadablePosition - 1)];
+  const nextChapterIndex = readableChapterIndexes[Math.min(readableChapterIndexes.length - 1, currentReadablePosition + 1)];
 
   const togglePart = (index: number) => {
     const next = new Set(Array.from(expandedParts));
@@ -216,6 +227,13 @@ export default function BookPage() {
             Тренажёр JTBD
           </button>
           <button
+            onClick={() => navigate('/research')}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
+          >
+            <Compass className="w-3.5 h-3.5" />
+            Research Navigator
+          </button>
+          <button
             onClick={toggleTheme}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
           >
@@ -239,7 +257,7 @@ export default function BookPage() {
             <Menu className="w-5 h-5" />
           </button>
           <span className="text-sm font-semibold text-muted-foreground flex-1 lg:flex-none">
-            {currentChapterIndex + 1} <span className="opacity-40">/ {chaptersData.length}</span>
+            {currentReadablePosition + 1} <span className="opacity-40">/ {readableChapterIndexes.length}</span>
           </span>
           <div className="hidden lg:flex items-center gap-1">
             <button
@@ -257,12 +275,23 @@ export default function BookPage() {
               Тренажёр
             </button>
             <button
+              onClick={() => navigate('/research')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+            >
+              <Compass className="w-3.5 h-3.5" />
+              Исследование
+            </button>
+            <button
               onClick={toggleTheme}
               className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
             >
               {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
           </div>
+        </div>
+
+        <div className="h-0.5 bg-border" aria-label={`Прогресс чтения: ${Math.round(readingProgress)}%`}>
+          <div className="h-full bg-foreground transition-all duration-300" style={{ width: `${readingProgress}%` }} />
         </div>
 
         {/* Content */}
@@ -272,6 +301,12 @@ export default function BookPage() {
               <h1 className="text-3xl lg:text-4xl font-black tracking-tight text-foreground mb-8" style={{ letterSpacing: '-0.025em' }}>
                 {currentChapter.title}
               </h1>
+              <div className="mb-8 flex items-center gap-2 text-xs text-muted-foreground">
+                <Clock className="w-3.5 h-3.5" />
+                ≈ {getReadingMinutes(currentChapter.content)} мин чтения
+                <span className="opacity-40">·</span>
+                Глава {currentReadablePosition + 1} из {readableChapterIndexes.length}
+              </div>
               <Streamdown>{currentChapter.content}</Streamdown>
             </article>
 
@@ -281,8 +316,8 @@ export default function BookPage() {
               style={{ borderTop: "1px solid var(--border)" }}
             >
               <button
-                onClick={() => handleChapterClick(Math.max(0, currentChapterIndex - 1))}
-                disabled={currentChapterIndex === 0}
+                onClick={() => handleChapterClick(previousChapterIndex)}
+                disabled={currentReadablePosition === 0}
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium text-foreground transition-all disabled:opacity-20 hover:bg-accent"
                 style={{ border: "1px solid var(--border)" }}
               >
@@ -290,8 +325,8 @@ export default function BookPage() {
                 Предыдущая
               </button>
               <button
-                onClick={() => handleChapterClick(Math.min(chaptersData.length - 1, currentChapterIndex + 1))}
-                disabled={currentChapterIndex === chaptersData.length - 1}
+                onClick={() => handleChapterClick(nextChapterIndex)}
+                disabled={currentReadablePosition === readableChapterIndexes.length - 1}
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold btn-primary disabled:opacity-20"
               >
                 Следующая
