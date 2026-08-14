@@ -128,7 +128,7 @@ export default function Home() {
         {/* Top label */}
         <div className="mb-8">
           <span className="text-xs font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-            Методология
+            Методология (Beta 3)
           </span>
         </div>
 

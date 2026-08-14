@@ -12,3 +12,4 @@
 - [x] Improve the home experience and cross-page navigation around the new research workflow.
 - [x] Add or update automated tests for changed application behaviour.
 - [x] Validate the complete site, update completed TODO items, and save a checkpoint.
+- [x] Update the Home hero label to «Методология (Beta 3)».
