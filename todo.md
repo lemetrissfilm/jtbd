@@ -17,3 +17,7 @@
 - [x] Rewrite the Home narrative with clear hooks: product problem, methodology promise, and reader outcomes.
 - [x] Add a concise method preview and conversion path from the Home page to the book and research tools.
 - [x] Validate the updated Home page at desktop and mobile breakpoints, then save a checkpoint.
+- [x] Add a short visual video-introduction section explaining the book and its core promise.
+- [x] Add a realistic interactive Context Canvas example to demonstrate the methodology in use.
+- [x] Add a realistic interactive Job Chain example that follows the same product scenario.
+- [x] Validate the new Home sections at desktop and mobile breakpoints, then save a checkpoint.
