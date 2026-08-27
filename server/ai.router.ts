@@ -4,6 +4,7 @@ import { invokeLLM } from "./_core/llm";
 import { readFileSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
+import { GENERATED_ARTIFACTS_JSON_SCHEMA, parseGeneratedArtifacts } from "./artifactGenerator";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -133,6 +134,26 @@ export const aiRouter = router({
       });
       const content = response.choices?.[0]?.message?.content ?? "";
       return { content };
+    }),
+
+  generateArtifacts: publicProcedure
+    .input(
+      z.object({
+        context: z.string().min(30, "Опишите ситуацию подробнее: минимум 30 символов").max(5000, "Контекст слишком длинный"),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const prompt = `Пользователь описал продуктовую ситуацию:\n\n${input.context}\n\nСобери черновик Context Canvas и Job Chain по Synthetic JTBD. Это не исследовательский факт, а рабочая гипотеза.\n\nПравила:\n1. Верни ровно пять полей Context Canvas: Кто, Когда, Где, Зачем, Как сейчас — именно в этом порядке.\n2. Если поле прямо следует из описания пользователя, поставь basis «Из описания пользователя». Если добавляешь обоснованное предположение, поставь basis «Гипотеза». Не выдумывай интервью, цифры, отзывы или поведение.\n3. Сформируй 4–7 шагов Job Chain. Каждый шаг — только гипотеза и обязан иметь ожидаемый результат (outcome). Тип шага: Основная, Налоговая или Лишняя.\n4. Назови минимум две ключевые гипотезы и минимум два действия для проверки с реальными людьми или данными.\n5. Отвечай по-русски, конкретно и без Markdown. Верни строго объект, соответствующий указанной JSON-схеме.`;
+
+      const response = await invokeLLM({
+        response_format: { type: "json_schema", json_schema: GENERATED_ARTIFACTS_JSON_SCHEMA },
+        messages: [
+          { role: "system" as const, content: "Ты — строгий фасилитатор Synthetic JTBD. Генерируй только структурированные гипотезы и не выдавай предположения за подтверждённые данные." },
+          { role: "user" as const, content: prompt },
+        ],
+      });
+
+      return parseGeneratedArtifacts(response.choices?.[0]?.message?.content);
     }),
 
   // Trainer endpoint - evaluate JTBD artifacts

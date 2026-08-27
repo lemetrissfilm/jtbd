@@ -5,13 +5,16 @@ import {
   ArrowRight,
   BookOpen,
   CheckCircle,
+  Clipboard,
   Compass,
   Loader2,
   MessageSquare,
   Moon,
+  RotateCcw,
   Send,
   Sparkles,
   Sun,
+  WandSparkles,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import chaptersData from "@/data/chapters_full.json";
@@ -28,6 +31,16 @@ const SUGGESTIONS = [
 const CTA_CLASS =
   "inline-flex items-center justify-center gap-2 rounded-2xl bg-foreground px-5 py-3.5 text-sm font-bold text-background transition-all hover:opacity-85 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
+type GeneratedArtifacts = {
+  title: string;
+  contextCanvas: { label: "Кто" | "Когда" | "Где" | "Зачем" | "Как сейчас"; value: string; basis: "Из описания пользователя" | "Гипотеза" }[];
+  jobChain: { step: string; type: "Основная" | "Налоговая" | "Лишняя"; label: string; outcome: string; basis: "Гипотеза" }[];
+  hypotheses: string[];
+  validationSteps: string[];
+};
+
+const CONTEXT_PROMPT = "Опишите продукт, пользователя, конкретный момент, что он пытается сделать и что ему мешает.\n\nНапример: руководитель поддержки за 20 минут до weekly review сводит метрики SLA из дашборда и Excel, чтобы объяснить COO причину просадки и договориться о действиях с командой.";
+
 export default function Home() {
   const [, navigate] = useLocation();
   const { theme, toggleTheme } = useTheme();
@@ -37,10 +50,15 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeArtifact, setActiveArtifact] = useState<"canvas" | "chain">("canvas");
   const [activeCase, setActiveCase] = useState<HomeArtifactCaseKey>("b2c");
+  const [customContext, setCustomContext] = useState("");
+  const [generatedArtifacts, setGeneratedArtifacts] = useState<GeneratedArtifacts | null>(null);
+  const [generatedView, setGeneratedView] = useState<"canvas" | "chain">("canvas");
+  const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const chatMutation = trpc.ai.chat.useMutation();
+  const artifactGeneratorMutation = trpc.ai.generateArtifacts.useMutation();
   const { chapters: chapterCount, parts: partCount } = getBookStats(chaptersData);
   const readingCtaLabel = getReadingCtaLabel(hasStarted);
   const artifactCase = HOME_ARTIFACT_CASES[activeCase];
@@ -80,6 +98,33 @@ export default function Home() {
       ]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const generateArtifacts = async () => {
+    if (customContext.trim().length < 30 || artifactGeneratorMutation.isPending) return;
+
+    try {
+      const generated = await artifactGeneratorMutation.mutateAsync({ context: customContext.trim() });
+      setGeneratedArtifacts(generated as GeneratedArtifacts);
+      setGeneratedView("canvas");
+    } catch {
+      // The mutation error is rendered below the form.
+    }
+  };
+
+  const copyGeneratedArtifacts = async () => {
+    if (!generatedArtifacts) return;
+    const canvas = generatedArtifacts.contextCanvas.map((item) => `${item.label}: ${item.value} [${item.basis}]`).join("\n");
+    const chain = generatedArtifacts.jobChain.map((item) => `${item.step}. ${item.type}: ${item.label} — ${item.outcome} [${item.basis}]`).join("\n");
+    const text = `${generatedArtifacts.title}\n\nCONTEXT CANVAS\n${canvas}\n\nJOB CHAIN\n${chain}\n\nКлючевые гипотезы\n${generatedArtifacts.hypotheses.map((item) => `- ${item}`).join("\n")}\n\nЧто проверить\n${generatedArtifacts.validationSteps.map((item) => `- ${item}`).join("\n")}`;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setCopied(false);
     }
   };
 
@@ -265,6 +310,92 @@ export default function Home() {
                 <div className="border-t border-border px-5 py-4 text-xs text-muted-foreground sm:px-6">Рабочий пример демонстрирует структуру артефакта; гипотезы из него нужно подтвердить реальными пользовательскими данными.</div>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section className="border-y border-border bg-card/35 px-4 py-20 sm:px-6">
+          <div className="mx-auto max-w-6xl">
+            <div className="grid gap-8 lg:grid-cols-[0.62fr_1.38fr] lg:gap-16">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Ваш контекст</p>
+                <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">Превратите ситуацию в первый черновик исследования.</h2>
+                <p className="mt-5 text-base leading-relaxed text-muted-foreground">Опишите реальный момент пользователя. AI соберёт Canvas и Job Chain, чётко отделив то, что вы сообщили, от рабочих гипотез.</p>
+                <div className="mt-7 rounded-2xl border border-border bg-background p-5 text-sm leading-relaxed text-muted-foreground">
+                  <p className="font-bold text-foreground">Что лучше указать</p>
+                  <p className="mt-2">Роль человека, момент запуска задачи, среду, желаемый результат, ограничение и текущий обходной путь.</p>
+                </div>
+              </div>
+
+              <div className="rounded-[2rem] border border-border bg-background p-5 sm:p-6">
+                <label htmlFor="custom-context" className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Ситуация пользователя</label>
+                <textarea
+                  id="custom-context"
+                  value={customContext}
+                  onChange={(event) => setCustomContext(event.target.value)}
+                  placeholder={CONTEXT_PROMPT}
+                  className="mt-3 min-h-44 w-full resize-y rounded-2xl border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
+                  maxLength={5000}
+                />
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-xs text-muted-foreground">{customContext.length}/5000 · Минимум 30 символов</span>
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={() => setCustomContext(CONTEXT_PROMPT)} className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"><RotateCcw className="h-3.5 w-3.5" />Вставить структуру</button>
+                    <button onClick={generateArtifacts} disabled={customContext.trim().length < 30 || artifactGeneratorMutation.isPending} className="inline-flex items-center gap-1.5 rounded-xl bg-foreground px-3.5 py-2 text-xs font-bold text-background transition-all hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-35 active:scale-[0.98]">
+                      {artifactGeneratorMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <WandSparkles className="h-3.5 w-3.5" />}
+                      {artifactGeneratorMutation.isPending ? "Собираю черновик…" : "Сгенерировать Canvas и Job Chain"}
+                    </button>
+                  </div>
+                </div>
+                {artifactGeneratorMutation.isError && <p className="mt-4 text-sm text-destructive">Не удалось собрать черновик. Уточните ситуацию и попробуйте ещё раз.</p>}
+              </div>
+            </div>
+
+            {generatedArtifacts && (
+              <div className="mt-8 overflow-hidden rounded-[2rem] border border-border bg-background">
+                <div className="flex flex-col gap-4 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Черновик исследования</p>
+                      <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Нужна валидация</span>
+                    </div>
+                    <h3 className="mt-1 text-xl font-black tracking-[-0.03em] text-foreground">{generatedArtifacts.title}</h3>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex w-fit rounded-xl border border-border bg-card p-1" role="tablist" aria-label="Сгенерированные артефакты">
+                      <button onClick={() => setGeneratedView("canvas")} aria-pressed={generatedView === "canvas"} className={`rounded-lg px-3 py-2 text-xs font-bold transition-all ${generatedView === "canvas" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}>Canvas</button>
+                      <button onClick={() => setGeneratedView("chain")} aria-pressed={generatedView === "chain"} className={`rounded-lg px-3 py-2 text-xs font-bold transition-all ${generatedView === "chain" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}>Job Chain</button>
+                    </div>
+                    <button onClick={copyGeneratedArtifacts} className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold text-foreground transition-colors hover:bg-accent"><Clipboard className="h-3.5 w-3.5" />{copied ? "Скопировано" : "Копировать"}</button>
+                  </div>
+                </div>
+
+                {generatedView === "canvas" ? (
+                  <div className="grid gap-px bg-border sm:grid-cols-2">
+                    {generatedArtifacts.contextCanvas.map((item, index) => (
+                      <article key={item.label} className={`min-h-32 bg-background p-5 sm:p-6 ${index === generatedArtifacts.contextCanvas.length - 1 ? "sm:col-span-2" : ""}`}>
+                        <div className="flex items-center justify-between gap-3"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p><span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${item.basis === "Гипотеза" ? "bg-accent text-muted-foreground" : "border border-border text-muted-foreground"}`}>{item.basis}</span></div>
+                        <p className="mt-4 max-w-xl text-base font-bold leading-snug tracking-[-0.02em] text-foreground">{item.value}</p>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border bg-background">
+                    {generatedArtifacts.jobChain.map((item) => (
+                      <article key={item.step} className="grid gap-3 p-5 sm:grid-cols-[3.25rem_7.5rem_1fr] sm:items-center sm:gap-4 sm:p-6">
+                        <span className="font-mono text-xs text-muted-foreground">{item.step}</span>
+                        <span className={`w-fit rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${item.type === "Основная" ? "border-foreground/30 text-foreground" : "border-border text-muted-foreground"}`}>{item.type}</span>
+                        <div><p className="font-bold tracking-[-0.02em] text-foreground">{item.label}</p><p className="mt-1 text-sm leading-relaxed text-muted-foreground">Критерий успеха: {item.outcome}</p></div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+
+                <div className="grid gap-px border-t border-border bg-border lg:grid-cols-2">
+                  <div className="bg-card p-5 sm:p-6"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Ключевые гипотезы</p><ul className="mt-4 space-y-3 text-sm leading-relaxed text-foreground">{generatedArtifacts.hypotheses.map((item) => <li key={item} className="flex gap-2"><span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-foreground" />{item}</li>)}</ul></div>
+                  <div className="bg-card p-5 sm:p-6"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Что проверить</p><ul className="mt-4 space-y-3 text-sm leading-relaxed text-foreground">{generatedArtifacts.validationSteps.map((item) => <li key={item} className="flex gap-2"><span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-foreground" />{item}</li>)}</ul></div>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 

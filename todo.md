@@ -24,3 +24,7 @@
 - [x] Remove the short video introduction section from the Home page.
 - [x] Add a switchable B2B Context Canvas and Job Chain example to the Home methodology artifacts.
 - [x] Validate the updated Home page at desktop and mobile breakpoints, then save a checkpoint.
+- [x] Add a structured AI procedure that converts a user-provided situation into Context Canvas and Job Chain drafts.
+- [x] Ensure generated artifacts label assumptions as hypotheses and include validation guidance.
+- [x] Add a Home-page form, loading state, generated artifact preview, and copy action.
+- [x] Add unit coverage and validate the generator experience, then save a checkpoint.
