@@ -16,7 +16,7 @@ import {
 import { trpc } from "@/lib/trpc";
 import chaptersData from "@/data/chapters_full.json";
 import { getBookStats, getReadingCtaLabel } from "@/lib/homeExperience";
-import { HOME_ARTIFACT_CASE, HOME_CONTEXT_CANVAS, HOME_JOB_CHAIN } from "@/data/homeArtifacts";
+import { HOME_ARTIFACT_CASES, type HomeArtifactCaseKey } from "@/data/homeArtifacts";
 
 const SUGGESTIONS = [
   "С чего начать JTBD-исследование?",
@@ -36,12 +36,14 @@ export default function Home() {
   const [messages, setMessages] = useState<{ role: "user" | "assistant"; text: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeArtifact, setActiveArtifact] = useState<"canvas" | "chain">("canvas");
+  const [activeCase, setActiveCase] = useState<HomeArtifactCaseKey>("b2c");
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const chatMutation = trpc.ai.chat.useMutation();
   const { chapters: chapterCount, parts: partCount } = getBookStats(chaptersData);
   const readingCtaLabel = getReadingCtaLabel(hasStarted);
+  const artifactCase = HOME_ARTIFACT_CASES[activeCase];
 
   useEffect(() => {
     setHasStarted(Boolean(localStorage.getItem("jtbd-last-chapter")));
@@ -206,32 +208,6 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-y border-border bg-card/35 px-4 py-20 sm:px-6">
-          <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
-            <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
-                Видео-введение · 00:08
-              </div>
-              <h2 className="mt-4 max-w-xl text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">Смотрите, как один сигнал превращается в продуктовое решение.</h2>
-              <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground">За восемь секунд — вся логика книги: разрозненные сигналы собираются в контекст, контекст становится цепочкой работ, а затем — основанием для решения.</p>
-              <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-foreground" />Сигналы</span>
-                <span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-foreground" />Context Canvas</span>
-                <span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-foreground" />Job Chain</span>
-                <span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-foreground" />Решение</span>
-              </div>
-            </div>
-            <div className="relative overflow-hidden rounded-[2rem] border border-border bg-background p-2 shadow-2xl shadow-black/20">
-              <video controls playsInline preload="metadata" className="aspect-video w-full rounded-[1.55rem] bg-black object-cover" aria-label="Короткое видео-введение в методологию Synthetic JTBD">
-                <source src="/manus-storage/synthetic-jtbd-intro_70dc7af9.mp4" type="video/mp4" />
-                Ваш браузер не поддерживает воспроизведение видео.
-              </video>
-              <div className="pointer-events-none absolute left-5 top-5 rounded-full border border-white/15 bg-black/60 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur">Synthetic JTBD</div>
-            </div>
-          </div>
-        </section>
-
         <section className="px-4 py-20 sm:px-6">
           <div className="mx-auto max-w-6xl">
             <div className="grid gap-8 lg:grid-cols-[0.62fr_1.38fr] lg:gap-16">
@@ -245,21 +221,28 @@ export default function Home() {
               </div>
 
               <div className="overflow-hidden rounded-[2rem] border border-border bg-card">
-                <div className="flex flex-col gap-4 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                <div className="flex flex-col gap-4 border-b border-border p-5 sm:p-6">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">{HOME_ARTIFACT_CASE.label}</p>
-                    <h3 className="mt-1 text-lg font-black tracking-[-0.025em] text-foreground">{HOME_ARTIFACT_CASE.title}</h3>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">{artifactCase.label}</p>
+                    <h3 className="mt-1 text-lg font-black tracking-[-0.025em] text-foreground">{artifactCase.title}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{artifactCase.description}</p>
                   </div>
-                  <div className="flex w-fit rounded-xl border border-border bg-background p-1" role="tablist" aria-label="Пример артефакта">
-                    <button onClick={() => setActiveArtifact("canvas")} aria-pressed={activeArtifact === "canvas"} className={`rounded-lg px-3 py-2 text-xs font-bold transition-all ${activeArtifact === "canvas" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}>Canvas</button>
-                    <button onClick={() => setActiveArtifact("chain")} aria-pressed={activeArtifact === "chain"} className={`rounded-lg px-3 py-2 text-xs font-bold transition-all ${activeArtifact === "chain" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}>Job Chain</button>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex w-fit rounded-xl border border-border bg-background p-1" role="tablist" aria-label="Пример продуктового контекста">
+                      <button onClick={() => setActiveCase("b2c")} aria-pressed={activeCase === "b2c"} className={`rounded-lg px-3 py-2 text-xs font-bold transition-all ${activeCase === "b2c" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}>B2C · финтех</button>
+                      <button onClick={() => setActiveCase("b2b")} aria-pressed={activeCase === "b2b"} className={`rounded-lg px-3 py-2 text-xs font-bold transition-all ${activeCase === "b2b" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}>B2B · SaaS</button>
+                    </div>
+                    <div className="flex w-fit rounded-xl border border-border bg-background p-1" role="tablist" aria-label="Пример артефакта">
+                      <button onClick={() => setActiveArtifact("canvas")} aria-pressed={activeArtifact === "canvas"} className={`rounded-lg px-3 py-2 text-xs font-bold transition-all ${activeArtifact === "canvas" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}>Canvas</button>
+                      <button onClick={() => setActiveArtifact("chain")} aria-pressed={activeArtifact === "chain"} className={`rounded-lg px-3 py-2 text-xs font-bold transition-all ${activeArtifact === "chain" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}>Job Chain</button>
+                    </div>
                   </div>
                 </div>
 
                 {activeArtifact === "canvas" ? (
                   <div className="grid gap-px bg-border sm:grid-cols-2">
-                    {HOME_CONTEXT_CANVAS.map((item, index) => (
-                      <article key={item.label} className={`min-h-32 bg-background p-5 sm:p-6 ${index === HOME_CONTEXT_CANVAS.length - 1 ? "sm:col-span-2" : ""}`}>
+                    {artifactCase.canvas.map((item, index) => (
+                      <article key={item.label} className={`min-h-32 bg-background p-5 sm:p-6 ${index === artifactCase.canvas.length - 1 ? "sm:col-span-2" : ""}`}>
                         <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
                         <p className="mt-4 max-w-md text-base font-bold leading-snug tracking-[-0.02em] text-foreground">{item.value}</p>
                       </article>
@@ -267,7 +250,7 @@ export default function Home() {
                   </div>
                 ) : (
                   <div className="divide-y divide-border bg-background">
-                    {HOME_JOB_CHAIN.map((item) => (
+                    {artifactCase.jobChain.map((item) => (
                       <article key={item.step} className="grid gap-3 p-5 sm:grid-cols-[3.25rem_7.5rem_1fr] sm:items-center sm:gap-4 sm:p-6">
                         <span className="font-mono text-xs text-muted-foreground">{item.step}</span>
                         <span className={`w-fit rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${item.type === "Основная" ? "border-foreground/30 text-foreground" : "border-border text-muted-foreground"}`}>{item.type}</span>

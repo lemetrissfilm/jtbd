@@ -1,20 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { HOME_CONTEXT_CANVAS, HOME_JOB_CHAIN } from "./homeArtifacts";
+import { HOME_ARTIFACT_CASES } from "./homeArtifacts";
 
 describe("Home methodology artifacts", () => {
-  it("contains a complete five-field Context Canvas", () => {
-    expect(HOME_CONTEXT_CANVAS.map((item) => item.label)).toEqual([
-      "Кто",
-      "Когда",
-      "Где",
-      "Зачем",
-      "Как сейчас",
-    ]);
+  it("contains a complete five-field Context Canvas for each scenario", () => {
+    Object.values(HOME_ARTIFACT_CASES).forEach((artifactCase) => {
+      expect(artifactCase.canvas.map((item) => item.label)).toEqual([
+        "Кто",
+        "Когда",
+        "Где",
+        "Зачем",
+        "Как сейчас",
+      ]);
+    });
   });
 
-  it("shows both core and tax jobs in the Job Chain example", () => {
-    expect(HOME_JOB_CHAIN).toHaveLength(5);
-    expect(HOME_JOB_CHAIN.some((item) => item.type === "Основная")).toBe(true);
-    expect(HOME_JOB_CHAIN.some((item) => item.type === "Налоговая")).toBe(true);
+  it("shows B2C and B2B examples with both core and tax jobs", () => {
+    expect(HOME_ARTIFACT_CASES.b2c.title).toContain("кассе");
+    expect(HOME_ARTIFACT_CASES.b2b.label).toContain("B2B SaaS");
+
+    Object.values(HOME_ARTIFACT_CASES).forEach((artifactCase) => {
+      expect(artifactCase.jobChain).toHaveLength(5);
+      expect(artifactCase.jobChain.some((item) => item.type === "Основная")).toBe(true);
+      expect(artifactCase.jobChain.some((item) => item.type === "Налоговая")).toBe(true);
+    });
   });
 });

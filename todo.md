@@ -21,3 +21,6 @@
 - [x] Add a realistic interactive Context Canvas example to demonstrate the methodology in use.
 - [x] Add a realistic interactive Job Chain example that follows the same product scenario.
 - [x] Validate the new Home sections at desktop and mobile breakpoints, then save a checkpoint.
+- [x] Remove the short video introduction section from the Home page.
+- [x] Add a switchable B2B Context Canvas and Job Chain example to the Home methodology artifacts.
+- [x] Validate the updated Home page at desktop and mobile breakpoints, then save a checkpoint.
