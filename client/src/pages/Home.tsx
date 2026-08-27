@@ -1,25 +1,36 @@
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { useEffect, useState, useRef } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Moon, Sun, BookOpen, MessageSquare, CheckCircle, ArrowRight, Send, Loader2, Compass } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  CheckCircle,
+  Compass,
+  Loader2,
+  MessageSquare,
+  Moon,
+  Send,
+  Sparkles,
+  Sun,
+} from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import chaptersData from "@/data/chapters_full.json";
+import { getBookStats, getReadingCtaLabel } from "@/lib/homeExperience";
 
 const SUGGESTIONS = [
-  "Что такое Job Story?",
-  "Как создать нейроперсону?",
-  "Чем JTBD лучше персон?",
+  "С чего начать JTBD-исследование?",
+  "Как отличить Job Story от User Story?",
+  "Как проверить гипотезу с нейроперсоной?",
   "Что такое Context Canvas?",
-  "Как считать Opportunity Score?",
-  "С чего начать исследование?",
 ];
+
+const CTA_CLASS =
+  "inline-flex items-center justify-center gap-2 rounded-2xl bg-foreground px-5 py-3.5 text-sm font-bold text-background transition-all hover:opacity-85 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 export default function Home() {
   const [, navigate] = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [hasStarted, setHasStarted] = useState(false);
-
-  // Chat state
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<{ role: "user" | "assistant"; text: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -27,266 +38,219 @@ export default function Home() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const chatMutation = trpc.ai.chat.useMutation();
-  const chapterCount = chaptersData.filter((chapter) => !chapter.title.includes("ЧАСТЬ")).length;
-  const partCount = chaptersData.filter((chapter) => chapter.title.includes("ЧАСТЬ")).length;
+  const { chapters: chapterCount, parts: partCount } = getBookStats(chaptersData);
+  const readingCtaLabel = getReadingCtaLabel(hasStarted);
 
   useEffect(() => {
-    const saved = localStorage.getItem("jtbd-last-chapter");
-    setHasStarted(!!saved);
+    setHasStarted(Boolean(localStorage.getItem("jtbd-last-chapter")));
   }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const startReading = () => navigate("/book");
+
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
-    const userMsg = text.trim();
+
+    const userMessage = text.trim();
+    const nextMessages = [...messages, { role: "user" as const, text: userMessage }];
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", text: userMsg }]);
+    setMessages(nextMessages);
     setIsLoading(true);
+
     try {
-      const res = await chatMutation.mutateAsync({
-        messages: [{ role: "user" as const, content: userMsg }],
+      const response = await chatMutation.mutateAsync({
+        messages: nextMessages.map((message) => ({
+          role: message.role,
+          content: message.text,
+        })),
       });
-      const rawContent = res?.content;
-      const reply = typeof rawContent === "string" ? rawContent : "Не удалось получить ответ.";
-      setMessages((prev) => [...prev, { role: "assistant", text: reply }]);
+      const reply = typeof response.content === "string" ? response.content : "Не удалось получить ответ.";
+      setMessages((previous) => [...previous, { role: "assistant", text: reply }]);
     } catch {
-      setMessages((prev) => [...prev, { role: "assistant", text: "Произошла ошибка. Попробуйте ещё раз." }]);
+      setMessages((previous) => [
+        ...previous,
+        { role: "assistant", text: "Не получилось ответить. Попробуйте задать вопрос ещё раз." },
+      ]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage(input);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
-      {/* ── Header ── */}
+    <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <header
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-background/80 backdrop-blur-md"
-        style={{ borderBottom: "1px solid var(--border)" }}
+        className="fixed inset-x-0 top-0 z-50 flex items-center justify-between border-b border-border bg-background/80 px-4 py-3 backdrop-blur-md sm:px-6"
       >
-        <span className="text-sm font-semibold tracking-wide text-muted-foreground">
-          Synthetic <span className="text-foreground font-bold">JTBD</span>
-        </span>
-        <nav className="flex items-center gap-1">
-          <button
-            onClick={() => navigate("/chat")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            AI-чат
+        <button onClick={() => navigate("/")} className="text-sm font-semibold tracking-wide text-muted-foreground transition-colors hover:text-foreground">
+          Synthetic <span className="font-black text-foreground">JTBD</span>
+        </button>
+        <nav className="flex items-center gap-1" aria-label="Главная навигация">
+          <button onClick={() => navigate("/chat")} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:bg-accent hover:text-foreground sm:px-3">
+            <MessageSquare className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">AI-чат</span>
           </button>
-          <button
-            onClick={() => navigate("/trainer")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
-          >
-            <CheckCircle className="w-3.5 h-3.5" />
-            Тренажёр
+          <button onClick={() => navigate("/trainer")} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:bg-accent hover:text-foreground sm:px-3">
+            <CheckCircle className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Тренажёр</span>
           </button>
-          <button
-            onClick={() => navigate("/research")}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
-          >
-            <Compass className="w-3.5 h-3.5" />
+          <button onClick={() => navigate("/research")} className="hidden items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:bg-accent hover:text-foreground md:flex">
+            <Compass className="h-3.5 w-3.5" />
             Исследование
           </button>
-          <button
-            onClick={() => navigate("/book")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            Книга
-          </button>
-          <button
-            onClick={toggleTheme}
-            className="ml-1 p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
-          >
-            {theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+          <button onClick={toggleTheme} aria-label="Переключить тему" className="ml-1 rounded-full p-1.5 text-muted-foreground transition-all hover:bg-accent hover:text-foreground">
+            {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
           </button>
         </nav>
       </header>
 
-      {/* ── Hero ── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-20 pb-16">
-        {/* Radial glow */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse 80% 50% at 50% -10%, var(--glass-strong) 0%, transparent 60%)",
-          }}
-        />
+      <main>
+        <section className="relative isolate px-4 pb-20 pt-32 sm:px-6 sm:pt-40">
+          <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[36rem]" style={{ background: "radial-gradient(ellipse 60% 46% at 50% 0%, var(--glass-strong) 0%, transparent 72%)" }} />
+          <div className="mx-auto grid max-w-6xl items-end gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+            <div>
+              <div className="mb-6 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
+                Методология · Beta 3
+              </div>
+              <h1 className="max-w-3xl text-balance text-5xl font-black leading-[0.91] tracking-[-0.055em] text-foreground sm:text-7xl lg:text-[5.6rem]">
+                Перестаньте угадывать. Поймите, <span className="text-muted-foreground">зачем вас нанимают.</span>
+              </h1>
+              <p className="mt-7 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
+                <strong className="font-semibold text-foreground">Synthetic JTBD</strong> — это практическая книга и рабочая среда для тех, кто хочет превращать пользовательские сигналы в решения, а не в бесконечный список «нужных» фич.
+              </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <button onClick={startReading} className={CTA_CLASS}>
+                  <BookOpen className="h-4 w-4" />
+                  {readingCtaLabel}
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+                <button onClick={() => navigate("/research")} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-card px-5 py-3.5 text-sm font-semibold text-foreground transition-all hover:bg-accent active:scale-[0.98]">
+                  Пройти контур исследования
+                  <Compass className="h-4 w-4" />
+                </button>
+              </div>
+              <p className="mt-4 text-xs text-muted-foreground">{chapterCount} глав · {partCount} частей · AI-чат и тренажёр артефактов</p>
+            </div>
 
-        {/* Top label */}
-        <div className="mb-8">
-          <span className="text-xs font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-            Методология (Beta 3)
-          </span>
-        </div>
-
-        {/* Main headline */}
-        <h1
-          className="text-center font-black text-foreground leading-none tracking-tight mb-4"
-          style={{
-            fontSize: "clamp(3.5rem, 14vw, 9rem)",
-            letterSpacing: "-0.035em",
-            lineHeight: 0.92,
-          }}
-        >
-          Synthetic
-          <br />
-          JTBD
-        </h1>
-
-        {/* Subheadline */}
-        <p
-          className="text-center font-semibold text-muted-foreground mb-10 max-w-sm"
-          style={{ fontSize: "clamp(1rem, 2.5vw, 1.25rem)", letterSpacing: "-0.01em" }}
-        >
-          Понимайте пользователей через действия, а не слова
-        </p>
-
-        {/* ── Inline AI Chat ── */}
-        <div className="w-full max-w-lg flex flex-col gap-3">
-          {/* Message bubbles */}
-          {messages.length > 0 && (
-            <div className="flex flex-col gap-2 max-h-64 overflow-y-auto px-1">
-              {messages.map((msg, i) => (
-                <div
-                  key={i}
-                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                      msg.role === "user"
-                        ? "bg-foreground text-background font-medium rounded-br-sm"
-                        : "glass-card text-foreground rounded-bl-sm"
-                    }`}
-                  >
-                    {msg.text}
-                  </div>
+            <aside className="relative overflow-hidden rounded-[2rem] border border-border bg-card p-6 shadow-2xl shadow-black/20 sm:p-7">
+              <div className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-foreground/10 blur-3xl" />
+              <div className="relative">
+                <div className="mb-10 flex items-start justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border bg-background"><Sparkles className="h-4 w-4" /></div>
+                  <span className="rounded-full border border-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Не набор фич</span>
                 </div>
+                <p className="max-w-sm text-2xl font-black leading-tight tracking-[-0.035em] text-foreground sm:text-3xl">От слов «пользователь хочет» — к ситуации, в которой решение действительно нужно.</p>
+                <div className="mt-8 grid gap-3 border-t border-border pt-5 text-sm">
+                  {["Зафиксируете контекст и силы выбора", "Разложите путь на Job Chain", "Проверите гипотезы до того, как строить"].map((item, index) => (
+                    <div key={item} className="flex items-center gap-3 text-muted-foreground"><span className="font-mono text-xs text-foreground">0{index + 1}</span>{item}</div>
+                  ))}
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section className="border-y border-border bg-card/35 px-4 py-16 sm:px-6">
+          <div className="mx-auto max-w-6xl">
+            <div className="max-w-2xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Знакомая картина?</p>
+              <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">В бэклоге много работы. Ясности — мало.</h2>
+            </div>
+            <div className="mt-8 grid gap-3 md:grid-cols-3">
+              {[
+                { number: "01", title: "Фича есть — ценности нет", text: "Команда реализовала запрос, но пользователь всё равно выбирает привычный обходной путь." },
+                { number: "02", title: "Интервью не дают решения", text: "Люди говорят о желаниях, а команда не видит ситуацию, триггер и цену ошибки." },
+                { number: "03", title: "Приоритеты меняются каждую неделю", text: "RICE создаёт таблицу, но не отвечает: какую работу пользователя стоит улучшать первой." },
+              ].map((item) => (
+                <article key={item.number} className="rounded-3xl border border-border bg-background p-6">
+                  <span className="font-mono text-xs text-muted-foreground">{item.number}</span>
+                  <h3 className="mt-8 text-xl font-black tracking-[-0.025em] text-foreground">{item.title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.text}</p>
+                </article>
               ))}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="glass-card px-4 py-2.5 rounded-2xl rounded-bl-sm flex items-center gap-2">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">Думаю...</span>
-                  </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="px-4 py-20 sm:px-6">
+          <div className="mx-auto max-w-6xl">
+            <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Что внутри</p>
+                <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">Не теория ради теории. Контур, который приводит к решению.</h2>
+                <p className="mt-5 text-base leading-relaxed text-muted-foreground">Книга объясняет, как собрать доказательства, где AI ускоряет работу, а где нужна обязательная проверка с реальными людьми.</p>
+                <button onClick={startReading} className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-foreground transition-colors hover:text-muted-foreground">
+                  Открыть первую главу <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="grid gap-px overflow-hidden rounded-3xl border border-border bg-border sm:grid-cols-2">
+                {[
+                  { step: "01", title: "Сигналы вместо догадок", text: "Отделите наблюдения, цитаты и логи от интерпретаций команды." },
+                  { step: "02", title: "Контекст до решения", text: "Соберите Context Canvas и поймите, что происходит вокруг человека в момент выбора." },
+                  { step: "03", title: "Работа, а не интерфейс", text: "Сформулируйте Job Stories и Job Chain, не подменяя задачу готовой фичей." },
+                  { step: "04", title: "Приоритет с доказательствами", text: "Проверьте гипотезы и только потом используйте Opportunity Score, Kano и RICE." },
+                ].map((item) => (
+                  <article key={item.step} className="bg-background p-6 sm:p-7">
+                    <span className="font-mono text-xs text-muted-foreground">{item.step}</span>
+                    <h3 className="mt-7 text-lg font-black tracking-[-0.025em] text-foreground">{item.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.text}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="px-4 pb-20 sm:px-6">
+          <div className="mx-auto grid max-w-6xl gap-6 rounded-[2rem] border border-border bg-card p-6 sm:p-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+            <div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border bg-background"><MessageSquare className="h-4 w-4" /></div>
+              <h2 className="mt-5 text-2xl font-black tracking-[-0.035em] text-foreground">Не знаете, с чего начать?</h2>
+              <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">Спросите AI-ассистента. Он поможет разобраться в концепции, но не подменит реальные данные гипотезой.</p>
+              <button onClick={() => navigate("/chat")} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-foreground transition-colors hover:text-muted-foreground">
+                Открыть полный чат <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="min-w-0">
+              {messages.length === 0 ? (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {SUGGESTIONS.map((suggestion) => (
+                    <button key={suggestion} onClick={() => sendMessage(suggestion)} className="rounded-full border border-border bg-background px-3 py-1.5 text-left text-xs font-medium text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-[0.98]">{suggestion}</button>
+                  ))}
+                </div>
+              ) : (
+                <div className="mb-3 max-h-64 space-y-2 overflow-y-auto pr-1">
+                  {messages.map((message, index) => (
+                    <div key={`${message.role}-${index}`} className={message.role === "user" ? "ml-auto max-w-[90%] rounded-2xl rounded-br-sm bg-foreground px-4 py-2.5 text-sm text-background" : "max-w-[90%] rounded-2xl rounded-bl-sm border border-border bg-background px-4 py-2.5 text-sm leading-relaxed text-foreground"}>{message.text}</div>
+                  ))}
+                  {isLoading && <div className="flex w-fit items-center gap-2 rounded-2xl border border-border bg-background px-4 py-2.5 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" />Думаю…</div>}
+                  <div ref={messagesEndRef} />
                 </div>
               )}
-              <div ref={messagesEndRef} />
-            </div>
-          )}
-
-          {/* Suggestion bubbles — show only when no messages yet */}
-          {messages.length === 0 && (
-            <div className="flex flex-wrap gap-2 justify-center">
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => sendMessage(s)}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium glass-card text-muted-foreground hover:text-foreground hover:bg-accent transition-all active:scale-[0.97]"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Input row */}
-          <div
-            className="flex items-center gap-2 px-4 py-3 rounded-2xl glass-card"
-            style={{ border: "1px solid var(--glass-border)" }}
-          >
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Спросите что-нибудь о Synthetic JTBD..."
-              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
-              disabled={isLoading}
-            />
-            <button
-              onClick={() => sendMessage(input)}
-              disabled={!input.trim() || isLoading}
-              className="p-1.5 rounded-xl bg-foreground text-background disabled:opacity-30 hover:opacity-80 transition-all active:scale-95 flex-shrink-0"
-            >
-              <Send className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Book link below chat */}
-          <button
-            onClick={() => navigate("/book")}
-            className="self-center flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            {hasStarted ? "Продолжить чтение книги" : `Читать книгу — ${chapterCount} главы · ${partCount} частей`}
-            <ArrowRight className="w-3 h-3" />
-          </button>
-        </div>
-      </section>
-
-      {/* ── Features strip ── */}
-      <section className="px-6 pb-24">
-        <div className="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {[
-            {
-              icon: <BookOpen className="w-5 h-5" />,
-              title: "Полная книга",
-              desc: `${chapterCount} главы о методологии Synthetic JTBD`,
-              action: () => navigate("/book"),
-            },
-            {
-              icon: <MessageSquare className="w-5 h-5" />,
-              title: "AI-чат",
-              desc: "Задавайте вопросы по книге",
-              action: () => navigate("/chat"),
-            },
-            {
-              icon: <CheckCircle className="w-5 h-5" />,
-              title: "Тренажёр",
-              desc: "Проверяйте свои артефакты JTBD",
-              action: () => navigate("/trainer"),
-            },
-            {
-              icon: <Compass className="w-5 h-5" />,
-              title: "Research Navigator",
-              desc: "Соберите исследование от решения до валидации",
-              action: () => navigate("/research"),
-            },
-          ].map((item) => (
-            <button
-              key={item.title}
-              onClick={item.action}
-              className="group text-left p-5 rounded-2xl glass-card hover:bg-accent/50 transition-all active:scale-[0.98]"
-            >
-              <div className="text-muted-foreground mb-3 group-hover:text-foreground transition-colors">
-                {item.icon}
+              <div className="flex items-center gap-2 rounded-2xl border border-border bg-background px-4 py-3">
+                <input ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") sendMessage(input); }} placeholder="Спросите о методологии…" disabled={isLoading} className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-50" />
+                <button onClick={() => sendMessage(input)} disabled={!input.trim() || isLoading} aria-label="Отправить вопрос" className="rounded-xl bg-foreground p-2 text-background transition-all hover:opacity-80 disabled:opacity-30 active:scale-95"><Send className="h-3.5 w-3.5" /></button>
               </div>
-              <p className="font-bold text-foreground text-sm mb-1">{item.title}</p>
-              <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
-            </button>
-          ))}
-        </div>
-      </section>
+            </div>
+          </div>
+        </section>
 
-      {/* ── Footer ── */}
+        <section className="border-t border-border px-4 py-20 text-center sm:px-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Первый шаг — конкретный</p>
+          <h2 className="mx-auto mt-3 max-w-2xl text-4xl font-black leading-[0.95] tracking-[-0.05em] text-foreground sm:text-6xl">Откройте книгу. Найдите первую ситуацию, которую стоит понять.</h2>
+          <button onClick={startReading} className={`${CTA_CLASS} mt-8`}>
+            <BookOpen className="h-4 w-4" />
+            {hasStarted ? "Продолжить чтение" : "Начать с первой главы"}
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </section>
+      </main>
+
       <footer className="px-6 pb-8 text-center">
-        <p className="text-xs text-muted-foreground opacity-50">
-          Synthetic JTBD · Дмитрий Михайлов
-        </p>
+        <p className="text-xs text-muted-foreground/60">Synthetic JTBD · Дмитрий Михайлов</p>
       </footer>
     </div>
   );

@@ -13,3 +13,7 @@
 - [x] Add or update automated tests for changed application behaviour.
 - [x] Validate the complete site, update completed TODO items, and save a checkpoint.
 - [x] Update the Home hero label to «Методология (Beta 3)».
+- [x] Add a prominent, explicit CTA that starts or resumes reading the book.
+- [x] Rewrite the Home narrative with clear hooks: product problem, methodology promise, and reader outcomes.
+- [x] Add a concise method preview and conversion path from the Home page to the book and research tools.
+- [x] Validate the updated Home page at desktop and mobile breakpoints, then save a checkpoint.
