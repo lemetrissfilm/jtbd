@@ -13,8 +13,8 @@ describe("home experience", () => {
     expect(stats).toEqual({ chapters: 2, parts: 2 });
   });
 
-  it("uses a clear start-or-resume CTA", () => {
-    expect(getReadingCtaLabel(false)).toBe("Начать читать книгу");
-    expect(getReadingCtaLabel(true)).toBe("Продолжить чтение");
+  it("uses a clear methodology-first start-or-resume CTA", () => {
+    expect(getReadingCtaLabel(false)).toBe("Открыть методологию");
+    expect(getReadingCtaLabel(true)).toBe("Продолжить с места остановки");
   });
 });

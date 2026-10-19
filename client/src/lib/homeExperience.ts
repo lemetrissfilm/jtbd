@@ -8,5 +8,5 @@ export function getBookStats(chapters: ChapterLike[]) {
 }
 
 export function getReadingCtaLabel(hasStarted: boolean) {
-  return hasStarted ? "Продолжить чтение" : "Начать читать книгу";
+  return hasStarted ? "Продолжить с места остановки" : "Открыть методологию";
 }

@@ -215,3 +215,157 @@
   .btn-primary:active { transform: scale(0.97); }
   .btn-primary:disabled { opacity: 0.3; }
 }
+
+/* ─── Synthetic JTBD method motion ─── */
+.method-diagram {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.method-orbit {
+  position: absolute;
+  right: -4.5rem;
+  top: -7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  opacity: 0.8;
+}
+
+.method-orbit--outer {
+  width: 19rem;
+  height: 19rem;
+  border-color: color-mix(in srgb, var(--foreground) 20%, transparent);
+}
+
+.method-orbit--inner {
+  width: 12.5rem;
+  height: 12.5rem;
+  right: -1.25rem;
+  top: -3.75rem;
+  border-style: dashed;
+  opacity: 0.55;
+}
+
+.method-signal {
+  position: absolute;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--foreground);
+  box-shadow: 0 0 0 0.32rem color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.method-signal--one { right: 7.1rem; top: 3.6rem; }
+.method-signal--two { right: 2.6rem; top: 7.7rem; opacity: 0.65; }
+.method-signal--three { right: 9.7rem; top: 10rem; width: 0.38rem; height: 0.38rem; opacity: 0.5; }
+
+.method-core { position: relative; }
+
+.method-flow { position: relative; }
+
+.method-flow-rail {
+  position: absolute;
+  left: 0.24rem;
+  top: 1.2rem;
+  bottom: 1.2rem;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, var(--foreground), transparent);
+  opacity: 0.28;
+  transform-origin: top;
+}
+
+.method-flow-step { position: relative; }
+
+.method-step-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.method-step-card::after {
+  position: absolute;
+  right: 1.5rem;
+  top: 1.5rem;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: var(--foreground);
+  content: "";
+  opacity: 0.18;
+  transition: opacity 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.method-step-card:hover::after {
+  opacity: 0.8;
+  transform: scale(1.45);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .method-orbit--outer { animation: method-orbit 18s linear infinite; }
+  .method-orbit--inner { animation: method-orbit-reverse 12s linear infinite; }
+  .method-signal--one { animation: method-signal-one 5.4s cubic-bezier(0.77, 0, 0.175, 1) infinite; }
+  .method-signal--two { animation: method-signal-two 4.8s cubic-bezier(0.77, 0, 0.175, 1) 0.8s infinite; }
+  .method-signal--three { animation: method-signal-three 5.8s cubic-bezier(0.77, 0, 0.175, 1) 0.3s infinite; }
+  .method-core { animation: method-core-pulse 4.6s cubic-bezier(0.23, 1, 0.32, 1) infinite; }
+  .method-flow-rail { animation: method-rail 720ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+  .method-flow-step { animation: method-step-in 420ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+  .method-flow-step:nth-of-type(2) { animation-delay: 90ms; }
+  .method-flow-step:nth-of-type(3) { animation-delay: 150ms; }
+  .method-flow-step:nth-of-type(4) { animation-delay: 210ms; }
+  .method-step-card { animation: method-step-in 480ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+  .method-step-card:nth-child(2) { animation-delay: 60ms; }
+  .method-step-card:nth-child(3) { animation-delay: 120ms; }
+  .method-step-card:nth-child(4) { animation-delay: 180ms; }
+}
+
+@keyframes method-orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes method-orbit-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes method-signal-one {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.8; }
+  50% { transform: translate3d(-1.6rem, 1.2rem, 0) scale(1.35); opacity: 1; }
+}
+
+@keyframes method-signal-two {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.6; }
+  50% { transform: translate3d(1.25rem, -1.4rem, 0) scale(1.5); opacity: 1; }
+}
+
+@keyframes method-signal-three {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.45; }
+  50% { transform: translate3d(-0.75rem, -1rem, 0) scale(1.8); opacity: 0.9; }
+}
+
+@keyframes method-core-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+@keyframes method-rail {
+  from { transform: scaleY(0); opacity: 0; }
+  to { transform: scaleY(1); opacity: 0.28; }
+}
+
+@keyframes method-step-in {
+  from { transform: translate3d(0, 0.55rem, 0); opacity: 0; }
+  to { transform: translate3d(0, 0, 0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .method-orbit,
+  .method-signal,
+  .method-core,
+  .method-flow-rail,
+  .method-flow-step,
+  .method-step-card {
+    animation: none !important;
+  }
+}

@@ -3,7 +3,6 @@ import { useLocation } from "wouter";
 import { useTheme } from "@/contexts/ThemeContext";
 import {
   ArrowRight,
-  BookOpen,
   CheckCircle,
   Clipboard,
   Compass,
@@ -169,11 +168,11 @@ export default function Home() {
                 Начните не с фичи, а с <span className="text-muted-foreground">ситуации выбора.</span>
               </h1>
               <p className="mt-7 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-                <strong className="font-semibold text-foreground">Synthetic JTBD</strong> — книга и инструменты, которые помогают описать ситуацию выбора, сформулировать гипотезы и проверить их на пользовательских данных.
+                <strong className="font-semibold text-foreground">Synthetic JTBD</strong> — методология и рабочая среда для команд, которые хотят описать ситуацию выбора, сформулировать гипотезы и проверить их на пользовательских данных.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <button onClick={startReading} className={CTA_CLASS}>
-                  <BookOpen className="h-4 w-4" />
+                  <Compass className="h-4 w-4" />
                   {readingCtaLabel}
                   <ArrowRight className="h-4 w-4" />
                 </button>
@@ -182,20 +181,27 @@ export default function Home() {
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
-              <p className="mt-4 text-xs text-muted-foreground">{chapterCount} глав · {partCount} частей · AI-чат и тренажёр артефактов</p>
+              <p className="mt-4 text-xs text-muted-foreground">{chapterCount} рабочих материалов · {partCount} тематических модулей · AI-чат и тренажёр артефактов</p>
             </div>
 
             <aside className="relative overflow-hidden rounded-[2rem] border border-border bg-card p-6 shadow-2xl shadow-black/20 sm:p-7">
-              <div className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-foreground/10 blur-3xl" />
+              <div className="method-diagram" aria-hidden="true">
+                <span className="method-orbit method-orbit--outer" />
+                <span className="method-orbit method-orbit--inner" />
+                <span className="method-signal method-signal--one" />
+                <span className="method-signal method-signal--two" />
+                <span className="method-signal method-signal--three" />
+              </div>
               <div className="relative">
                 <div className="mb-10 flex items-start justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border bg-background"><Sparkles className="h-4 w-4" /></div>
-                  <span className="rounded-full border border-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Начните с ситуации</span>
+                  <div className="method-core flex h-10 w-10 items-center justify-center rounded-2xl border border-border bg-background"><Sparkles className="h-4 w-4" /></div>
+                  <span className="rounded-full border border-border bg-background/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Контур метода</span>
                 </div>
-                <p className="max-w-sm text-2xl font-black leading-tight tracking-[-0.035em] text-foreground sm:text-3xl">Ситуация → гипотеза → проверка. Так решение получает контекст.</p>
-                <div className="mt-8 grid gap-3 border-t border-border pt-5 text-sm">
+                <p className="max-w-sm text-2xl font-black leading-tight tracking-[-0.035em] text-foreground sm:text-3xl">Ситуация → гипотеза → проверка. Так методология ведёт к решению.</p>
+                <div className="method-flow mt-8 grid gap-3 border-t border-border pt-5 text-sm">
+                  <span className="method-flow-rail" aria-hidden="true" />
                   {["Зафиксируете контекст и силы выбора", "Разложите путь на Job Chain", "Сначала проверите гипотезы — потом решите, что строить"].map((item, index) => (
-                    <div key={item} className="flex items-center gap-3 text-muted-foreground"><span className="font-mono text-xs text-foreground">0{index + 1}</span>{item}</div>
+                    <div key={item} className="method-flow-step flex items-center gap-3 text-muted-foreground"><span className="font-mono text-xs text-foreground">0{index + 1}</span>{item}</div>
                   ))}
                 </div>
               </div>
@@ -229,11 +235,11 @@ export default function Home() {
           <div className="mx-auto max-w-6xl">
             <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Что внутри</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Как работает методология</p>
                 <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">От наблюдений о пользователе — к решению о продукте.</h2>
-                <p className="mt-5 text-base leading-relaxed text-muted-foreground">Книга объясняет, как собрать доказательства, где AI ускоряет работу, а где нужна обязательная проверка с реальными людьми.</p>
+                <p className="mt-5 text-base leading-relaxed text-muted-foreground">Методология помогает собрать доказательства, понять, где AI ускоряет работу, и сохранить обязательную проверку с реальными людьми.</p>
                 <button onClick={startReading} className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-foreground transition-colors hover:text-muted-foreground">
-                  Открыть первую главу <ArrowRight className="h-4 w-4" />
+                  Открыть первый шаг <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
               <div className="grid gap-px overflow-hidden rounded-3xl border border-border bg-border sm:grid-cols-2">
@@ -243,7 +249,7 @@ export default function Home() {
                   { step: "03", title: "Работа, а не интерфейс", text: "Сформулируйте Job Stories и Job Chain, не подменяя задачу готовой фичей." },
                   { step: "04", title: "Приоритет после проверки", text: "Соберите подтверждения или опровержения гипотез — и только затем применяйте Opportunity Score, Kano или RICE." },
                 ].map((item) => (
-                  <article key={item.step} className="bg-background p-6 sm:p-7">
+                  <article key={item.step} className="method-step-card bg-background p-6 sm:p-7">
                     <span className="font-mono text-xs text-muted-foreground">{item.step}</span>
                     <h3 className="mt-7 text-lg font-black tracking-[-0.025em] text-foreground">{item.title}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.text}</p>
@@ -262,7 +268,7 @@ export default function Home() {
                 <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">Один сценарий — два артефакта для работы команды.</h2>
                 <p className="mt-5 text-base leading-relaxed text-muted-foreground">Посмотрите, как конкретный контекст превращается в Canvas и Job Chain — основу для дизайна и проверки с пользователями.</p>
                 <button onClick={() => navigate("/book")} className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-foreground transition-colors hover:text-muted-foreground">
-                  Найти шаблоны в книге <ArrowRight className="h-4 w-4" />
+                  Перейти к шаблонам <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
 
@@ -436,10 +442,10 @@ export default function Home() {
 
         <section className="border-t border-border px-4 py-20 text-center sm:px-6">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Первый шаг — конкретный</p>
-          <h2 className="mx-auto mt-3 max-w-2xl text-4xl font-black leading-[0.95] tracking-[-0.05em] text-foreground sm:text-6xl">Откройте первую главу и выберите одну ситуацию пользователя для разбора.</h2>
+          <h2 className="mx-auto mt-3 max-w-2xl text-4xl font-black leading-[0.95] tracking-[-0.05em] text-foreground sm:text-6xl">Выберите одну ситуацию пользователя и пройдите первый шаг методологии.</h2>
           <button onClick={startReading} className={`${CTA_CLASS} mt-8`}>
-            <BookOpen className="h-4 w-4" />
-            {hasStarted ? "Продолжить чтение" : "Начать с первой главы"}
+            <Compass className="h-4 w-4" />
+            {hasStarted ? "Продолжить с места остановки" : "Начать с первого шага"}
             <ArrowRight className="h-4 w-4" />
           </button>
         </section>
