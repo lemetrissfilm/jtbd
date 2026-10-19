@@ -72,6 +72,7 @@ export default function Home() {
   }, [messages]);
 
   const startReading = () => navigate("/book");
+  const scrollToExample = () => document.getElementById("method-example")?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
@@ -165,10 +166,10 @@ export default function Home() {
                 Методология · Beta 3
               </div>
               <h1 className="max-w-3xl text-balance text-5xl font-black leading-[0.91] tracking-[-0.055em] text-foreground sm:text-7xl lg:text-[5.6rem]">
-                Перестаньте угадывать. Поймите, <span className="text-muted-foreground">зачем вас нанимают.</span>
+                Начните не с фичи, а с <span className="text-muted-foreground">ситуации выбора.</span>
               </h1>
               <p className="mt-7 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-                <strong className="font-semibold text-foreground">Synthetic JTBD</strong> — это практическая книга и рабочая среда для тех, кто хочет превращать пользовательские сигналы в решения, а не в бесконечный список «нужных» фич.
+                <strong className="font-semibold text-foreground">Synthetic JTBD</strong> — книга и инструменты, которые помогают описать ситуацию выбора, сформулировать гипотезы и проверить их на пользовательских данных.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <button onClick={startReading} className={CTA_CLASS}>
@@ -176,9 +177,9 @@ export default function Home() {
                   {readingCtaLabel}
                   <ArrowRight className="h-4 w-4" />
                 </button>
-                <button onClick={() => navigate("/research")} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-card px-5 py-3.5 text-sm font-semibold text-foreground transition-all hover:bg-accent active:scale-[0.98]">
-                  Пройти контур исследования
-                  <Compass className="h-4 w-4" />
+                <button onClick={scrollToExample} className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground active:scale-[0.98]">
+                  Посмотреть пример
+                  <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
               <p className="mt-4 text-xs text-muted-foreground">{chapterCount} глав · {partCount} частей · AI-чат и тренажёр артефактов</p>
@@ -189,11 +190,11 @@ export default function Home() {
               <div className="relative">
                 <div className="mb-10 flex items-start justify-between">
                   <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border bg-background"><Sparkles className="h-4 w-4" /></div>
-                  <span className="rounded-full border border-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Не набор фич</span>
+                  <span className="rounded-full border border-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Начните с ситуации</span>
                 </div>
-                <p className="max-w-sm text-2xl font-black leading-tight tracking-[-0.035em] text-foreground sm:text-3xl">От слов «пользователь хочет» — к ситуации, в которой решение действительно нужно.</p>
+                <p className="max-w-sm text-2xl font-black leading-tight tracking-[-0.035em] text-foreground sm:text-3xl">Ситуация → гипотеза → проверка. Так решение получает контекст.</p>
                 <div className="mt-8 grid gap-3 border-t border-border pt-5 text-sm">
-                  {["Зафиксируете контекст и силы выбора", "Разложите путь на Job Chain", "Проверите гипотезы до того, как строить"].map((item, index) => (
+                  {["Зафиксируете контекст и силы выбора", "Разложите путь на Job Chain", "Сначала проверите гипотезы — потом решите, что строить"].map((item, index) => (
                     <div key={item} className="flex items-center gap-3 text-muted-foreground"><span className="font-mono text-xs text-foreground">0{index + 1}</span>{item}</div>
                   ))}
                 </div>
@@ -206,13 +207,13 @@ export default function Home() {
           <div className="mx-auto max-w-6xl">
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Знакомая картина?</p>
-              <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">В бэклоге много работы. Ясности — мало.</h2>
+              <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">Работы в бэклоге много. Контекста для выбора — мало.</h2>
             </div>
             <div className="mt-8 grid gap-3 md:grid-cols-3">
               {[
-                { number: "01", title: "Фича есть — ценности нет", text: "Команда реализовала запрос, но пользователь всё равно выбирает привычный обходной путь." },
-                { number: "02", title: "Интервью не дают решения", text: "Люди говорят о желаниях, а команда не видит ситуацию, триггер и цену ошибки." },
-                { number: "03", title: "Приоритеты меняются каждую неделю", text: "RICE создаёт таблицу, но не отвечает: какую работу пользователя стоит улучшать первой." },
+                { number: "01", title: "Фича вышла — привычка не изменилась", text: "Команда реализовала запрос, а пользователь всё равно выбирает знакомый обходной путь." },
+                { number: "02", title: "Интервью есть — контекста нет", text: "Люди рассказывают о желаниях, но в решении не видны триггер, ограничения и цена ошибки." },
+                { number: "03", title: "Таблица есть — ответа нет", text: "RICE помогает выбрать порядок, но не подсказывает, какую работу пользователя сначала стоит исследовать." },
               ].map((item) => (
                 <article key={item.number} className="rounded-3xl border border-border bg-background p-6">
                   <span className="font-mono text-xs text-muted-foreground">{item.number}</span>
@@ -229,7 +230,7 @@ export default function Home() {
             <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Что внутри</p>
-                <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">Не теория ради теории. Контур, который приводит к решению.</h2>
+                <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">От наблюдений о пользователе — к решению о продукте.</h2>
                 <p className="mt-5 text-base leading-relaxed text-muted-foreground">Книга объясняет, как собрать доказательства, где AI ускоряет работу, а где нужна обязательная проверка с реальными людьми.</p>
                 <button onClick={startReading} className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-foreground transition-colors hover:text-muted-foreground">
                   Открыть первую главу <ArrowRight className="h-4 w-4" />
@@ -240,7 +241,7 @@ export default function Home() {
                   { step: "01", title: "Сигналы вместо догадок", text: "Отделите наблюдения, цитаты и логи от интерпретаций команды." },
                   { step: "02", title: "Контекст до решения", text: "Соберите Context Canvas и поймите, что происходит вокруг человека в момент выбора." },
                   { step: "03", title: "Работа, а не интерфейс", text: "Сформулируйте Job Stories и Job Chain, не подменяя задачу готовой фичей." },
-                  { step: "04", title: "Приоритет с доказательствами", text: "Проверьте гипотезы и только потом используйте Opportunity Score, Kano и RICE." },
+                  { step: "04", title: "Приоритет после проверки", text: "Соберите подтверждения или опровержения гипотез — и только затем применяйте Opportunity Score, Kano или RICE." },
                 ].map((item) => (
                   <article key={item.step} className="bg-background p-6 sm:p-7">
                     <span className="font-mono text-xs text-muted-foreground">{item.step}</span>
@@ -253,13 +254,13 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="px-4 py-20 sm:px-6">
+        <section id="method-example" className="scroll-mt-24 px-4 py-20 sm:px-6">
           <div className="mx-auto max-w-6xl">
             <div className="grid gap-8 lg:grid-cols-[0.62fr_1.38fr] lg:gap-16">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Методология в действии</p>
-                <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">Не абстрактная схема. Рабочие артефакты команды.</h2>
-                <p className="mt-5 text-base leading-relaxed text-muted-foreground">Посмотрите, как один конкретный момент — оплата на кассе — превращается в два артефакта, с которыми можно идти к дизайну и валидации.</p>
+                <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">Один сценарий — два артефакта для работы команды.</h2>
+                <p className="mt-5 text-base leading-relaxed text-muted-foreground">Посмотрите, как конкретный контекст превращается в Canvas и Job Chain — основу для дизайна и проверки с пользователями.</p>
                 <button onClick={() => navigate("/book")} className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-foreground transition-colors hover:text-muted-foreground">
                   Найти шаблоны в книге <ArrowRight className="h-4 w-4" />
                 </button>
@@ -307,7 +308,7 @@ export default function Home() {
                     ))}
                   </div>
                 )}
-                <div className="border-t border-border px-5 py-4 text-xs text-muted-foreground sm:px-6">Рабочий пример демонстрирует структуру артефакта; гипотезы из него нужно подтвердить реальными пользовательскими данными.</div>
+                <div className="border-t border-border px-5 py-4 text-xs leading-relaxed text-muted-foreground sm:px-6">Это пример структуры, а не результат исследования. Любой вывод о пользователе остаётся гипотезой, пока его не проверят в интервью, наблюдениях или продуктовых данных. «Налоговая» — сопутствующая работа, необходимая для выполнения основной.</div>
               </div>
             </div>
           </div>
@@ -318,10 +319,10 @@ export default function Home() {
             <div className="grid gap-8 lg:grid-cols-[0.62fr_1.38fr] lg:gap-16">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Ваш контекст</p>
-                <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">Превратите ситуацию в первый черновик исследования.</h2>
-                <p className="mt-5 text-base leading-relaxed text-muted-foreground">Опишите реальный момент пользователя. AI соберёт Canvas и Job Chain, чётко отделив то, что вы сообщили, от рабочих гипотез.</p>
+                <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">Получите черновик Canvas и Job Chain по своему описанию.</h2>
+                <p className="mt-5 text-base leading-relaxed text-muted-foreground">Опишите реальную ситуацию. AI структурирует то, что вы сообщили, и предложит гипотезы для проверки — он не заменяет пользовательские данные.</p>
                 <div className="mt-7 rounded-2xl border border-border bg-background p-5 text-sm leading-relaxed text-muted-foreground">
-                  <p className="font-bold text-foreground">Что лучше указать</p>
+                  <p className="font-bold text-foreground">Чтобы черновик был полезнее, укажите</p>
                   <p className="mt-2">Роль человека, момент запуска задачи, среду, желаемый результат, ограничение и текущий обходной путь.</p>
                 </div>
               </div>
@@ -339,10 +340,10 @@ export default function Home() {
                 <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-xs text-muted-foreground">{customContext.length}/5000 · Минимум 30 символов</span>
                   <div className="flex flex-wrap gap-2">
-                    <button onClick={() => setCustomContext(CONTEXT_PROMPT)} className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"><RotateCcw className="h-3.5 w-3.5" />Вставить структуру</button>
+                    <button onClick={() => setCustomContext(CONTEXT_PROMPT)} className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"><RotateCcw className="h-3.5 w-3.5" />Вставить шаблон с примером</button>
                     <button onClick={generateArtifacts} disabled={customContext.trim().length < 30 || artifactGeneratorMutation.isPending} className="inline-flex items-center gap-1.5 rounded-xl bg-foreground px-3.5 py-2 text-xs font-bold text-background transition-all hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-35 active:scale-[0.98]">
                       {artifactGeneratorMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <WandSparkles className="h-3.5 w-3.5" />}
-                      {artifactGeneratorMutation.isPending ? "Собираю черновик…" : "Сгенерировать Canvas и Job Chain"}
+                      {artifactGeneratorMutation.isPending ? "Собираю черновик…" : "Подготовить черновик Canvas и Job Chain"}
                     </button>
                   </div>
                 </div>
@@ -404,7 +405,7 @@ export default function Home() {
             <div>
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border bg-background"><MessageSquare className="h-4 w-4" /></div>
               <h2 className="mt-5 text-2xl font-black tracking-[-0.035em] text-foreground">Не знаете, с чего начать?</h2>
-              <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">Спросите AI-ассистента. Он поможет разобраться в концепции, но не подменит реальные данные гипотезой.</p>
+              <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">Методический помощник объяснит подход и поможет сформулировать вопросы. Его ответы не являются пользовательскими данными и не подтверждают гипотезы.</p>
               <button onClick={() => navigate("/chat")} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-foreground transition-colors hover:text-muted-foreground">
                 Открыть полный чат <ArrowRight className="h-4 w-4" />
               </button>
@@ -435,7 +436,7 @@ export default function Home() {
 
         <section className="border-t border-border px-4 py-20 text-center sm:px-6">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Первый шаг — конкретный</p>
-          <h2 className="mx-auto mt-3 max-w-2xl text-4xl font-black leading-[0.95] tracking-[-0.05em] text-foreground sm:text-6xl">Откройте книгу. Найдите первую ситуацию, которую стоит понять.</h2>
+          <h2 className="mx-auto mt-3 max-w-2xl text-4xl font-black leading-[0.95] tracking-[-0.05em] text-foreground sm:text-6xl">Откройте первую главу и выберите одну ситуацию пользователя для разбора.</h2>
           <button onClick={startReading} className={`${CTA_CLASS} mt-8`}>
             <BookOpen className="h-4 w-4" />
             {hasStarted ? "Продолжить чтение" : "Начать с первой главы"}

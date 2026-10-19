@@ -28,3 +28,7 @@
 - [x] Ensure generated artifacts label assumptions as hypotheses and include validation guidance.
 - [x] Add a Home-page form, loading state, generated artifact preview, and copy action.
 - [x] Add unit coverage and validate the generator experience, then save a checkpoint.
+- [x] Audit and humanise the Home landing-page narrative, CTAs, and information hierarchy.
+- [x] Stress-test the current Synthetic JTBD workflow on a new virtual case and identify material book improvements.
+- [x] Apply only high-confidence editorial and methodology refinements, synchronize book chapters, validate, and save a checkpoint.
+- [ ] Save a new checkpoint for the audited landing-page and methodology/book refinements.
