@@ -31,4 +31,4 @@
 - [x] Audit and humanise the Home landing-page narrative, CTAs, and information hierarchy.
 - [x] Stress-test the current Synthetic JTBD workflow on a new virtual case and identify material book improvements.
 - [x] Apply only high-confidence editorial and methodology refinements, synchronize book chapters, validate, and save a checkpoint.
-- [ ] Save a new checkpoint for the audited landing-page and methodology/book refinements.
+- [x] Save a new checkpoint for the audited landing-page and methodology/book refinements.
