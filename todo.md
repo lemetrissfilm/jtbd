@@ -34,4 +34,4 @@
 - [x] Save a new checkpoint for the audited landing-page and methodology/book refinements.
 - [x] Reframe the Home page from a book-first proposition to a methodology-first proposition.
 - [x] Add restrained, thematic motion that visualises the route from signal to hypothesis to validation and respects reduced-motion preferences.
-- [ ] Validate the animated landing at desktop and mobile breakpoints, then save a checkpoint.
+- [x] Validate the animated landing at desktop and mobile breakpoints, then save a checkpoint.
