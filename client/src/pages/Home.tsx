@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import chaptersData from "@/data/chapters_full.json";
-import { getBookStats, getReadingCtaLabel } from "@/lib/homeExperience";
+import { getBookStats, getReadingCtaLabel, HOME_HERO_HEADLINE } from "@/lib/homeExperience";
 import { HOME_ARTIFACT_CASES, type HomeArtifactCaseKey } from "@/data/homeArtifacts";
 
 const SUGGESTIONS = [
@@ -165,7 +165,7 @@ export default function Home() {
                 Методология · Beta 3
               </div>
               <h1 className="max-w-3xl text-balance text-5xl font-black leading-[0.91] tracking-[-0.055em] text-foreground sm:text-7xl lg:text-[5.6rem]">
-                Начните не с фичи, а с <span className="text-muted-foreground">ситуации выбора.</span>
+                {HOME_HERO_HEADLINE.prefix} <span className="text-muted-foreground">{HOME_HERO_HEADLINE.emphasis}</span>
               </h1>
               <p className="mt-7 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
                 <strong className="font-semibold text-foreground">Synthetic JTBD</strong> — методология и рабочая среда для команд, которые хотят описать ситуацию выбора, сформулировать гипотезы и проверить их на пользовательских данных.

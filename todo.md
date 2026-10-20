@@ -35,3 +35,4 @@
 - [x] Reframe the Home page from a book-first proposition to a methodology-first proposition.
 - [x] Add restrained, thematic motion that visualises the route from signal to hypothesis to validation and respects reduced-motion preferences.
 - [x] Validate the animated landing at desktop and mobile breakpoints, then save a checkpoint.
+- [ ] Manually apply and verify the requested hero headline about starting development with context understanding, then save a checkpoint.
