@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { ChevronDown, ChevronUp, Search, Home, Menu, X, Moon, Sun, MessageSquare, CheckCircle, ArrowLeft, ArrowRight, Clock, Compass } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import chaptersData from '@/data/chapters_full.json';
 import { Streamdown } from 'streamdown';
+import { createBookMarkdownPlugins } from '@/lib/bookMarkdown';
 
 interface Chapter {
   title: string;
@@ -23,6 +24,7 @@ const readableChapterIndexes = chaptersData.reduce<number[]>((indexes, chapter, 
 const getReadingMinutes = (content: string) => Math.max(1, Math.ceil(content.trim().split(/\s+/).length / 220));
 
 export default function BookPage() {
+  const bookMarkdownPlugins = useMemo(() => createBookMarkdownPlugins(window.location.origin), []);
   const [, navigate] = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [currentChapterIndex, setCurrentChapterIndex] = useState(readableChapterIndexes[0] ?? 0);
@@ -307,7 +309,7 @@ export default function BookPage() {
                 <span className="opacity-40">·</span>
                 Глава {currentReadablePosition + 1} из {readableChapterIndexes.length}
               </div>
-              <Streamdown>{currentChapter.content}</Streamdown>
+              <Streamdown rehypePlugins={bookMarkdownPlugins}>{currentChapter.content}</Streamdown>
             </article>
 
             {/* Chapter navigation */}

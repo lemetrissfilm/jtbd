@@ -36,3 +36,15 @@
 - [x] Add restrained, thematic motion that visualises the route from signal to hypothesis to validation and respects reduced-motion preferences.
 - [x] Validate the animated landing at desktop and mobile breakpoints, then save a checkpoint.
 - [x] Manually apply and verify the requested hero headline about starting development with context understanding, then save a checkpoint.
+
+- [x] Prepare a PS.kz static release and a restricted PHP gateway to the existing Manus AI backend, retaining current UI and tRPC contracts.
+- [x] Test PHP lint, request/upstream guards, rate/concurrency limits, standalone HTML/assets, Apache SPA routes, local book PNG, and HTML200-to-JSON503 handling (77 Vitest tests, TypeScript and both production builds pass).
+- [x] Copy the authoritative book context into the production Manus build, avoiding the pre-existing fallback-only packaging defect.
+- [x] Fix Streamdown relative-image blocking for trusted book media without opening third-party/data image URLs.
+- [x] Complete functional browser checks: desktop/mobile routes, themes, reduced motion, artifact tabs, reading state, chapter navigation, real book PNG and readable upstream-unavailable tRPC error.
+- [ ] Verify actual PHP/cURL/iconv/temp/flock and rewrite behaviour on PS.kz.
+- [ ] Restore and validate live upstream AI generation; the published Manus API currently returns an unpaid-billing HTML page.
+- [ ] Deploy to an isolated jtbd.mikh.kz document root in Plesk, verify the origin, and switch only the JTBD DNS record after readiness checks.
+- [ ] Verify HTTPS and public routes/AI after cutover, document rollback and updates, and save the migration checkpoint.
+
+Preparation is not public deployment. Chrome on the user's Mac currently reports no active window; hosting files and DNS are still unchanged. Cutover with temporarily unavailable AI requires the owner's explicit choice.
