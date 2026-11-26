@@ -44,6 +44,7 @@ function CaseSection({ item, onOpenChapter }: { item: BookCase; onOpenChapter: (
         <Row label="Job Story">
           <span className="block border-l-2 border-foreground pl-4 italic">{item.jobStory}</span>
         </Row>
+        {item.criterion && <Row label="Критерий выполнения">{item.criterion}</Row>}
         <Row label="Как проверить">{item.check}</Row>
         <Row label="Осторожно">{item.watchOut}</Row>
       </dl>
