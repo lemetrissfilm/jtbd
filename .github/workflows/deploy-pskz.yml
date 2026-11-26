@@ -100,8 +100,9 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
         run: |
           set -euo pipefail
-          # Защита от выкладки в корень или в чужой каталог.
-          case "$FTP_DIR" in ""|"/"|"."|"~"|"/httpdocs"|"httpdocs") echo "::error::PSKZ_FTP_DIR должен указывать на выделенный каталог сайта JTBD"; exit 1;; esac
+          # Защита от выкладки в общий каталог. Для отдельного FTP-пользователя с домашней папкой
+          # сайта JTBD правильное значение "/" (пользователь ограничен своей папкой).
+          case "$FTP_DIR" in ""|"."|"~"|"/httpdocs"|"httpdocs") echo "::error::PSKZ_FTP_DIR указывает на общий каталог, а не на папку сайта JTBD"; exit 1;; esac
           # Все служебные каталоги Plesk остаются нетронутыми при --delete.
           EXCLUDES='--exclude-glob .well-known/ --exclude-glob cgi-bin/ --exclude-glob error_docs/ --exclude-glob stat/ --exclude-glob .ftpquota'
           FLAGS="--reverse --parallel=4 --verbose $EXCLUDES"
