@@ -31,7 +31,7 @@ export default function Home() {
         <span className="font-serif text-lg font-semibold">Synthetic JTBD</span>
         <nav className="flex items-center gap-5 text-sm">
           <button onClick={() => navigate("/book")} className="text-muted-foreground hover:text-foreground">Книга</button>
-          <button onClick={() => navigate("/research")} className="text-muted-foreground hover:text-foreground">Research Navigator</button>
+          <button onClick={() => navigate("/cases")} className="text-muted-foreground hover:text-foreground">Кейсы</button>
           <button onClick={toggleTheme} aria-label={theme === "dark" ? "Светлая тема" : "Тёмная тема"} className="text-muted-foreground hover:text-foreground">
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>

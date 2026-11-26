@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation } from 'wouter';
-import { ChevronDown, ChevronUp, Search, Home, Menu, X, Moon, Sun, ArrowLeft, ArrowRight, Compass } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, Home, Menu, X, Moon, Sun, ArrowLeft, ArrowRight, BookOpenText } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import chaptersData from '@/data/chapters_full.json';
 import { Streamdown } from 'streamdown';
@@ -54,7 +54,8 @@ export default function BookPage() {
   }, [readChapters]);
 
   useEffect(() => {
-    const lastRead = localStorage.getItem('lastReadChapter');
+    const requested = new URLSearchParams(window.location.search).get('ch');
+    const lastRead = requested ?? localStorage.getItem('lastReadChapter');
     if (lastRead) {
       const index = parseInt(lastRead);
       if (readableChapterIndexes.includes(index)) setCurrentChapterIndex(index);
@@ -96,6 +97,12 @@ export default function BookPage() {
   const readingProgress = ((currentReadablePosition + 1) / readableChapterIndexes.length) * 100;
   const previousChapterIndex = readableChapterIndexes[Math.max(0, currentReadablePosition - 1)];
   const nextChapterIndex = readableChapterIndexes[Math.min(readableChapterIndexes.length - 1, currentReadablePosition + 1)];
+
+  useEffect(() => {
+    let part = -1;
+    for (let i = 0; i <= currentChapterIndex; i++) if (chaptersData[i].title.includes('ЧАСТЬ')) part++;
+    if (part >= 0) setExpandedParts(prev => (prev.has(part) ? prev : new Set([...Array.from(prev), part])));
+  }, [currentChapterIndex]);
 
   const togglePart = (index: number) => {
     const next = new Set(Array.from(expandedParts));
@@ -224,11 +231,11 @@ export default function BookPage() {
           style={{ borderTop: "1px solid var(--border)" }}
         >
           <button
-            onClick={() => navigate('/research')}
+            onClick={() => navigate('/cases')}
             className="w-full flex items-center gap-2 px-3 py-2 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all"
           >
-            <Compass className="w-3.5 h-3.5" />
-            Research Navigator
+            <BookOpenText className="w-3.5 h-3.5" />
+            Кейсы
           </button>
           <button
             onClick={toggleTheme}
@@ -258,11 +265,11 @@ export default function BookPage() {
           </span>
           <div className="hidden lg:flex items-center gap-1">
             <button
-              onClick={() => navigate('/research')}
+              onClick={() => navigate('/cases')}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
-              <Compass className="w-3.5 h-3.5" />
-              Исследование
+              <BookOpenText className="w-3.5 h-3.5" />
+              Кейсы
             </button>
             <button
               onClick={toggleTheme}

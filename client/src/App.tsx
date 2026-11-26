@@ -6,7 +6,8 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import BookPage from "./pages/BookPage";
 import Home from "./pages/Home";
-import ResearchNavigatorPage from "./pages/ResearchNavigatorPage";
+import CasesPage from "./pages/CasesPage";
+import { Redirect } from "wouter";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -14,7 +15,8 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/book" component={BookPage} />
-      <Route path="/research" component={ResearchNavigatorPage} />
+      <Route path="/cases" component={CasesPage} />
+      <Route path="/research"><Redirect to="/cases" /></Route>
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
