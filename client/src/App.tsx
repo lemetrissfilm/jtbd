@@ -6,8 +6,6 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import BookPage from "./pages/BookPage";
 import Home from "./pages/Home";
-import ChatPage from "./pages/ChatPage";
-import TrainerPage from "./pages/TrainerPage";
 import ResearchNavigatorPage from "./pages/ResearchNavigatorPage";
 
 function Router() {
@@ -16,8 +14,6 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/book" component={BookPage} />
-      <Route path="/chat" component={ChatPage} />
-      <Route path="/trainer" component={TrainerPage} />
       <Route path="/research" component={ResearchNavigatorPage} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
@@ -35,7 +31,7 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider
-        defaultTheme="dark"
+        defaultTheme="light"
         switchable
       >
         <TooltipProvider>

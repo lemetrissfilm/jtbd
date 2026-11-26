@@ -20,10 +20,9 @@ describe("PS.kz standalone release helpers", () => {
   it("localizes every occurrence without modifying unrelated storage references", () => {
     expect(localizeIllustration(`${SOURCE_ILLUSTRATION} ${SOURCE_ILLUSTRATION} /manus-storage/other.png`)).toBe(`${LOCAL_ILLUSTRATION} ${LOCAL_ILLUSTRATION} /manus-storage/other.png`);
   });
-  it("keeps relative tRPC routing before SPA fallback and blocks support/source files", () => {
-    expect(APACHE_RULES.indexOf("^api/trpc/")).toBeLessThan(APACHE_RULES.indexOf("^ index.html"));
-    expect(APACHE_RULES).toContain("gateway.php [END]");
-    expect(APACHE_RULES).toContain("gateway-lib\\.php");
+  it("answers unknown API paths with 404 before the SPA fallback and blocks source files", () => {
+    expect(APACHE_RULES.indexOf("^api(?:/|$)")).toBeLessThan(APACHE_RULES.indexOf("^ index.html"));
+    expect(APACHE_RULES).not.toContain("gateway");
     expect(APACHE_RULES).toContain("Options -Indexes -MultiViews");
     expect(APACHE_RULES).toContain("^(?:assets|media)");
     expect(APACHE_RULES).not.toContain("cname.manus.space");

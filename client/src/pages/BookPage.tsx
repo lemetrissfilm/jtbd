@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation } from 'wouter';
-import { ChevronDown, ChevronUp, Search, Home, Menu, X, Moon, Sun, MessageSquare, CheckCircle, ArrowLeft, ArrowRight, Clock, Compass } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, Home, Menu, X, Moon, Sun, ArrowLeft, ArrowRight, Compass } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import chaptersData from '@/data/chapters_full.json';
 import { Streamdown } from 'streamdown';
@@ -22,6 +22,15 @@ const readableChapterIndexes = chaptersData.reduce<number[]>((indexes, chapter, 
 }, []);
 
 const getReadingMinutes = (content: string) => Math.max(1, Math.ceil(content.trim().split(/\s+/).length / 220));
+
+const ROMAN = /^[IVXLC]+\.?$/;
+const formatPartName = (name: string) => {
+  const words = name.replace('ЧАСТЬ ', 'Часть ').split(' ');
+  return words
+    .map((word, i) => (i === 0 || ROMAN.test(word) ? word : word.toLowerCase()))
+    .join(' ')
+    .replace(/^(Часть [IVXLC]+\.? )(.)/, (_m, a, b) => a + b.toUpperCase());
+};
 
 export default function BookPage() {
   const bookMarkdownPlugins = useMemo(() => createBookMarkdownPlugins(window.location.origin), []);
@@ -118,7 +127,7 @@ export default function BookPage() {
       {mobileMenuOpen && (
         <div
           className="fixed inset-0 z-40 lg:hidden"
-          style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+          style={{ background: "rgba(0,0,0,0.4)" }}
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
@@ -128,12 +137,12 @@ export default function BookPage() {
         className={`fixed lg:relative w-72 h-screen z-50 lg:z-auto flex flex-col transition-transform duration-300 bg-sidebar ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
-        style={{ borderRight: "1px solid var(--sidebar-border)" }}
+        style={{ borderRight: "1px solid var(--border)" }}
       >
         {/* Sidebar header */}
         <div
           className="flex items-center justify-between px-4 py-4"
-          style={{ borderBottom: "1px solid var(--sidebar-border)" }}
+          style={{ borderBottom: "1px solid var(--border)" }}
         >
           <button
             onClick={() => navigate('/')}
@@ -148,14 +157,14 @@ export default function BookPage() {
         </div>
 
         {/* Search */}
-        <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--sidebar-border)" }}>
+        <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <input
-              placeholder="Поиск по главам..."
+              placeholder="Поиск по главам"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 rounded-xl text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 bg-input"
+              className="w-full pl-9 pr-3 py-2 rounded text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 bg-input"
               style={{ border: "1px solid var(--border)" }}
             />
           </div>
@@ -167,10 +176,10 @@ export default function BookPage() {
             <div key={partIndex} className="mb-1">
               <button
                 onClick={() => togglePart(partIndex)}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors hover:bg-sidebar-accent"
+                className="w-full flex items-center justify-between px-3 py-2 rounded text-left transition-colors hover:bg-accent/10"
               >
-                <span className="text-xs font-bold tracking-wide text-muted-foreground uppercase line-clamp-2 flex-1 pr-2">
-                  {part.name.replace('ЧАСТЬ ', 'Ч. ')}
+                <span className="text-sm font-semibold text-foreground line-clamp-2 flex-1 pr-2">
+                  {formatPartName(part.name)}
                 </span>
                 {expandedParts.has(partIndex)
                   ? <ChevronUp className="w-3 h-3 text-muted-foreground flex-shrink-0" />
@@ -188,10 +197,10 @@ export default function BookPage() {
                       <button
                         key={globalIndex}
                         onClick={() => handleChapterClick(globalIndex)}
-                        className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-all line-clamp-2 ${
+                        className={`w-full text-left px-3 py-2 rounded text-sm leading-snug transition-colors line-clamp-3 ${
                           isActive
                             ? 'bg-primary text-primary-foreground font-semibold'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-sidebar-accent'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-accent/10'
                         }`}
                       >
                         <span className="flex items-start gap-1.5">
@@ -212,32 +221,18 @@ export default function BookPage() {
         {/* Sidebar footer */}
         <div
           className="px-3 py-3 space-y-1.5"
-          style={{ borderTop: "1px solid var(--sidebar-border)" }}
+          style={{ borderTop: "1px solid var(--border)" }}
         >
           <button
-            onClick={() => navigate('/chat')}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            AI-чат по книге
-          </button>
-          <button
-            onClick={() => navigate('/trainer')}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
-          >
-            <CheckCircle className="w-3.5 h-3.5" />
-            Тренажёр JTBD
-          </button>
-          <button
             onClick={() => navigate('/research')}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all"
           >
             <Compass className="w-3.5 h-3.5" />
             Research Navigator
           </button>
           <button
             onClick={toggleTheme}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all"
           >
             {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             {theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
@@ -263,29 +258,15 @@ export default function BookPage() {
           </span>
           <div className="hidden lg:flex items-center gap-1">
             <button
-              onClick={() => navigate('/chat')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              AI-чат
-            </button>
-            <button
-              onClick={() => navigate('/trainer')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
-            >
-              <CheckCircle className="w-3.5 h-3.5" />
-              Тренажёр
-            </button>
-            <button
               onClick={() => navigate('/research')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
               <Compass className="w-3.5 h-3.5" />
               Исследование
             </button>
             <button
               onClick={toggleTheme}
-              className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+              className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
               {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
@@ -298,29 +279,24 @@ export default function BookPage() {
 
         {/* Content */}
         <div ref={contentScrollRef} className="flex-1 overflow-y-auto">
-          <div className="max-w-3xl mx-auto px-6 lg:px-10 py-12">
-            <article className="prose dark:prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-h1:text-4xl prose-h2:text-2xl prose-h3:text-xl prose-p:leading-relaxed">
-              <h1 className="text-3xl lg:text-4xl font-black tracking-tight text-foreground mb-8" style={{ letterSpacing: '-0.025em' }}>
-                {currentChapter.title}
-              </h1>
-              <div className="mb-8 flex items-center gap-2 text-xs text-muted-foreground">
-                <Clock className="w-3.5 h-3.5" />
-                ≈ {getReadingMinutes(currentChapter.content)} мин чтения
-                <span className="opacity-40">·</span>
-                Глава {currentReadablePosition + 1} из {readableChapterIndexes.length}
-              </div>
+          <div className="mx-auto w-full max-w-[52rem] px-6 lg:px-12 py-12 lg:py-16">
+            <article className="book-prose">
+              <h1>{currentChapter.title}</h1>
+              <p className="not-prose text-sm text-muted-foreground" style={{ fontFamily: 'var(--font-sans)', hyphens: 'manual', marginBottom: '2.5rem' }}>
+                Глава {currentReadablePosition + 1} из {readableChapterIndexes.length}, около {getReadingMinutes(currentChapter.content)}&nbsp;мин чтения
+              </p>
               <Streamdown rehypePlugins={bookMarkdownPlugins}>{currentChapter.content}</Streamdown>
             </article>
 
             {/* Chapter navigation */}
             <div
-              className="flex gap-3 mt-16 pt-8"
+              className="flex gap-3 mt-16 pt-8 max-w-[34rem]" 
               style={{ borderTop: "1px solid var(--border)" }}
             >
               <button
                 onClick={() => handleChapterClick(previousChapterIndex)}
                 disabled={currentReadablePosition === 0}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium text-foreground transition-all disabled:opacity-20 hover:bg-accent"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded text-sm font-medium text-foreground transition-all disabled:opacity-20 hover:bg-muted"
                 style={{ border: "1px solid var(--border)" }}
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -329,7 +305,7 @@ export default function BookPage() {
               <button
                 onClick={() => handleChapterClick(nextChapterIndex)}
                 disabled={currentReadablePosition === readableChapterIndexes.length - 1}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold btn-primary disabled:opacity-20"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded text-sm font-medium bg-primary text-primary-foreground disabled:opacity-20"
               >
                 Следующая
                 <ArrowRight className="w-4 h-4" />

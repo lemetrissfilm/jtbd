@@ -26,10 +26,8 @@ export const APACHE_RULES = `Options -Indexes -MultiViews
 DirectoryIndex index.html
 RewriteEngine On
 
-# Never expose supporting PHP implementation or development/source files.
-RewriteRule ^(?:gateway-lib\\.php(?:/|$)|\\.(?!well-known(?:/|$))|(?:server|node_modules|deploy)(?:/|$)|.*\\.(?:map|md|ts|tsx)$) - [F,L]
-# Preserve REQUEST_URI and the tRPC query; the gateway validates both.
-RewriteRule ^api/trpc/[A-Za-z.,]+$ gateway.php [END]
+# Never expose development/source files.
+RewriteRule ^(?:\\.(?!well-known(?:/|$))|(?:server|node_modules|deploy)(?:/|$)|.*\\.(?:map|md|ts|tsx)$) - [F,L]
 # Unknown APIs must not be served the SPA HTML fallback.
 RewriteRule ^api(?:/|$) - [R=404,L]
 RewriteCond %{REQUEST_FILENAME} -f [OR]
@@ -105,9 +103,6 @@ export async function buildPskzRelease(output, illustrationSource) {
   });
   await mkdir(path.join(output, "media"), { recursive: true });
   await copyFile(illustrationSource, path.join(output, "media", ILLUSTRATION_NAME));
-  for (const filename of ["gateway.php", "gateway-lib.php"]) {
-    await copyFile(path.join(root, "deploy/pskz", filename), path.join(output, filename));
-  }
   await writeFile(path.join(output, ".htaccess"), APACHE_RULES);
   await writeFile(path.join(output, "robots.txt"), "User-agent: *\nAllow: /\nDisallow: /api/\n");
   const commit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
@@ -116,7 +111,6 @@ export async function buildPskzRelease(output, illustrationSource) {
     host: "PS.kz",
     sourceCommit: commit,
     builtAt: new Date().toISOString(),
-    aiBackend: "https://jtbd.manus.space",
     illustration: LOCAL_ILLUSTRATION,
   }, null, 2) + "\n");
   for (const file of await readdir(path.join(output, "assets"))) {

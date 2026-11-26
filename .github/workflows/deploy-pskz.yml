@@ -134,4 +134,3 @@ jobs:
             code=$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 20 "$SITE_URL$path")
             echo "$path -> $code"
           done
-          curl --silent --head --max-time 20 "$SITE_URL/gateway-lib.php" | head -1

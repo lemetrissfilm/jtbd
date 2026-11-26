@@ -1,458 +1,108 @@
-import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
-import {
-  ArrowRight,
-  CheckCircle,
-  Clipboard,
-  Compass,
-  Loader2,
-  MessageSquare,
-  Moon,
-  RotateCcw,
-  Send,
-  Sparkles,
-  Sun,
-  WandSparkles,
-} from "lucide-react";
-import { trpc } from "@/lib/trpc";
 import chaptersData from "@/data/chapters_full.json";
-import { getBookStats, getReadingCtaLabel, HOME_HERO_HEADLINE } from "@/lib/homeExperience";
-import { HOME_ARTIFACT_CASES, type HomeArtifactCaseKey } from "@/data/homeArtifacts";
+import { getBookStats, getReadingCtaLabel } from "@/lib/homeExperience";
 
-const SUGGESTIONS = [
-  "С чего начать JTBD-исследование?",
-  "Как отличить Job Story от User Story?",
-  "Как проверить гипотезу с нейроперсоной?",
-  "Что такое Context Canvas?",
+const stats = getBookStats(chaptersData);
+
+const forces = [
+  { name: "Push", text: "Что выталкивает человека из текущего решения." },
+  { name: "Pull", text: "Что притягивает к новому." },
+  { name: "Habit", text: "Что удерживает привычку." },
+  { name: "Anxiety", text: "Что тревожит в переходе." },
 ];
 
-const CTA_CLASS =
-  "inline-flex items-center justify-center gap-2 rounded-2xl bg-foreground px-5 py-3.5 text-sm font-bold text-background transition-all hover:opacity-85 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
-
-type GeneratedArtifacts = {
-  title: string;
-  contextCanvas: { label: "Кто" | "Когда" | "Где" | "Зачем" | "Как сейчас"; value: string; basis: "Из описания пользователя" | "Гипотеза" }[];
-  jobChain: { step: string; type: "Основная" | "Налоговая" | "Лишняя"; label: string; outcome: string; basis: "Гипотеза" }[];
-  hypotheses: string[];
-  validationSteps: string[];
-};
-
-const CONTEXT_PROMPT = "Опишите продукт, пользователя, конкретный момент, что он пытается сделать и что ему мешает.\n\nНапример: руководитель поддержки за 20 минут до weekly review сводит метрики SLA из дашборда и Excel, чтобы объяснить COO причину просадки и договориться о действиях с командой.";
+const ladder = [
+  { level: "E0", text: "Гипотеза: правдоподобно, но не проверено." },
+  { level: "E1", text: "Косвенные сигналы: отзывы, тикеты, логи." },
+  { level: "E2", text: "Прямое свидетельство: интервью о прошлом поведении." },
+  { level: "E3", text: "Подтверждено поведением в продукте." },
+];
 
 export default function Home() {
   const [, navigate] = useLocation();
   const { theme, toggleTheme } = useTheme();
-  const [hasStarted, setHasStarted] = useState(false);
-  const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<{ role: "user" | "assistant"; text: string }[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [activeArtifact, setActiveArtifact] = useState<"canvas" | "chain">("canvas");
-  const [activeCase, setActiveCase] = useState<HomeArtifactCaseKey>("b2c");
-  const [customContext, setCustomContext] = useState("");
-  const [generatedArtifacts, setGeneratedArtifacts] = useState<GeneratedArtifacts | null>(null);
-  const [generatedView, setGeneratedView] = useState<"canvas" | "chain">("canvas");
-  const [copied, setCopied] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const chatMutation = trpc.ai.chat.useMutation();
-  const artifactGeneratorMutation = trpc.ai.generateArtifacts.useMutation();
-  const { chapters: chapterCount, parts: partCount } = getBookStats(chaptersData);
-  const readingCtaLabel = getReadingCtaLabel(hasStarted);
-  const artifactCase = HOME_ARTIFACT_CASES[activeCase];
-
-  useEffect(() => {
-    setHasStarted(Boolean(localStorage.getItem("jtbd-last-chapter")));
-  }, []);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const startReading = () => navigate("/book");
-  const scrollToExample = () => document.getElementById("method-example")?.scrollIntoView({ behavior: "smooth", block: "start" });
-
-  const sendMessage = async (text: string) => {
-    if (!text.trim() || isLoading) return;
-
-    const userMessage = text.trim();
-    const nextMessages = [...messages, { role: "user" as const, text: userMessage }];
-    setInput("");
-    setMessages(nextMessages);
-    setIsLoading(true);
-
-    try {
-      const response = await chatMutation.mutateAsync({
-        messages: nextMessages.map((message) => ({
-          role: message.role,
-          content: message.text,
-        })),
-      });
-      const reply = typeof response.content === "string" ? response.content : "Не удалось получить ответ.";
-      setMessages((previous) => [...previous, { role: "assistant", text: reply }]);
-    } catch {
-      setMessages((previous) => [
-        ...previous,
-        { role: "assistant", text: "Не получилось ответить. Попробуйте задать вопрос ещё раз." },
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const generateArtifacts = async () => {
-    if (customContext.trim().length < 30 || artifactGeneratorMutation.isPending) return;
-
-    try {
-      const generated = await artifactGeneratorMutation.mutateAsync({ context: customContext.trim() });
-      setGeneratedArtifacts(generated as GeneratedArtifacts);
-      setGeneratedView("canvas");
-    } catch {
-      // The mutation error is rendered below the form.
-    }
-  };
-
-  const copyGeneratedArtifacts = async () => {
-    if (!generatedArtifacts) return;
-    const canvas = generatedArtifacts.contextCanvas.map((item) => `${item.label}: ${item.value} [${item.basis}]`).join("\n");
-    const chain = generatedArtifacts.jobChain.map((item) => `${item.step}. ${item.type}: ${item.label} — ${item.outcome} [${item.basis}]`).join("\n");
-    const text = `${generatedArtifacts.title}\n\nCONTEXT CANVAS\n${canvas}\n\nJOB CHAIN\n${chain}\n\nКлючевые гипотезы\n${generatedArtifacts.hypotheses.map((item) => `- ${item}`).join("\n")}\n\nЧто проверить\n${generatedArtifacts.validationSteps.map((item) => `- ${item}`).join("\n")}`;
-
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
-    } catch {
-      setCopied(false);
-    }
-  };
+  const hasStarted = typeof window !== "undefined" && !!localStorage.getItem("lastReadChapter");
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
-      <header
-        className="fixed inset-x-0 top-0 z-50 flex items-center justify-between border-b border-border bg-background/80 px-4 py-3 backdrop-blur-md sm:px-6"
-      >
-        <button onClick={() => navigate("/")} className="text-sm font-semibold tracking-wide text-muted-foreground transition-colors hover:text-foreground">
-          Synthetic <span className="font-black text-foreground">JTBD</span>
-        </button>
-        <nav className="flex items-center gap-1" aria-label="Главная навигация">
-          <button onClick={() => navigate("/chat")} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:bg-accent hover:text-foreground sm:px-3">
-            <MessageSquare className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">AI-чат</span>
-          </button>
-          <button onClick={() => navigate("/trainer")} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:bg-accent hover:text-foreground sm:px-3">
-            <CheckCircle className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Тренажёр</span>
-          </button>
-          <button onClick={() => navigate("/research")} className="hidden items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:bg-accent hover:text-foreground md:flex">
-            <Compass className="h-3.5 w-3.5" />
-            Исследование
-          </button>
-          <button onClick={toggleTheme} aria-label="Переключить тему" className="ml-1 rounded-full p-1.5 text-muted-foreground transition-all hover:bg-accent hover:text-foreground">
-            {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
+        <span className="font-serif text-lg font-semibold">Synthetic JTBD</span>
+        <nav className="flex items-center gap-5 text-sm">
+          <button onClick={() => navigate("/book")} className="text-muted-foreground hover:text-foreground">Книга</button>
+          <button onClick={() => navigate("/research")} className="text-muted-foreground hover:text-foreground">Research Navigator</button>
+          <button onClick={toggleTheme} aria-label={theme === "dark" ? "Светлая тема" : "Тёмная тема"} className="text-muted-foreground hover:text-foreground">
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
         </nav>
       </header>
 
-      <main>
-        <section className="relative isolate px-4 pb-20 pt-32 sm:px-6 sm:pt-40">
-          <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[36rem]" style={{ background: "radial-gradient(ellipse 60% 46% at 50% 0%, var(--glass-strong) 0%, transparent 72%)" }} />
-          <div className="mx-auto grid max-w-6xl items-end gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+      <main className="mx-auto max-w-5xl px-6">
+        <section className="pb-20 pt-16 sm:pt-24">
+          <h1 className="display max-w-[15ch] text-[clamp(2.5rem,1.6rem+3.6vw,4.75rem)]">
+            Начните разработку не с&nbsp;фичи, а&nbsp;с&nbsp;понимания контекста
+          </h1>
+          <p className="lede mt-8 max-w-xl">
+            Практическое руководство по Jobs To Be Done для продуктовых и UX-команд: как собрать контекст,
+            отделить факт от гипотезы и принять решение, которое можно проверить.
+          </p>
+          <div className="mt-10 flex flex-wrap items-center gap-6">
+            <button
+              onClick={() => navigate("/book")}
+              className="rounded bg-primary px-6 py-3 text-sm font-medium text-primary-foreground"
+            >
+              {getReadingCtaLabel(hasStarted)}
+            </button>
+            <span className="text-sm text-muted-foreground">
+              {stats.chapters}&nbsp;глав в&nbsp;{stats.parts}&nbsp;частях
+            </span>
+          </div>
+        </section>
+
+        <section className="border-t border-border py-16">
+          <div className="grid gap-10 md:grid-cols-[1fr_1.4fr]">
+            <h2 className="display text-3xl sm:text-4xl">Четыре силы, которые решают всё</h2>
             <div>
-              <div className="mb-6 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
-                Методология · Beta 3
-              </div>
-              <h1 className="max-w-3xl text-balance text-5xl font-black leading-[0.91] tracking-[-0.055em] text-foreground sm:text-7xl lg:text-[5.6rem]">
-                {HOME_HERO_HEADLINE.prefix} <span className="text-muted-foreground">{HOME_HERO_HEADLINE.emphasis}</span>
-              </h1>
-              <p className="mt-7 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-                <strong className="font-semibold text-foreground">Synthetic JTBD</strong> — методология и рабочая среда для команд, которые хотят описать ситуацию выбора, сформулировать гипотезы и проверить их на пользовательских данных.
+              <p className="font-serif text-lg leading-relaxed" style={{ textWrap: "pretty" }}>
+                Человек меняет решение, когда выталкивающие и притягивающие силы пересиливают привычку и тревогу.
+                Метод учит находить эти силы в конкретной ситуации, а не в абстрактной аудитории.
               </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <button onClick={startReading} className={CTA_CLASS}>
-                  <Compass className="h-4 w-4" />
-                  {readingCtaLabel}
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-                <button onClick={scrollToExample} className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground active:scale-[0.98]">
-                  Посмотреть пример
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </div>
-              <p className="mt-4 text-xs text-muted-foreground">{chapterCount} рабочих материалов · {partCount} тематических модулей · AI-чат и тренажёр артефактов</p>
-            </div>
-
-            <aside className="relative overflow-hidden rounded-[2rem] border border-border bg-card p-6 shadow-2xl shadow-black/20 sm:p-7">
-              <div className="method-diagram" aria-hidden="true">
-                <span className="method-orbit method-orbit--outer" />
-                <span className="method-orbit method-orbit--inner" />
-                <span className="method-signal method-signal--one" />
-                <span className="method-signal method-signal--two" />
-                <span className="method-signal method-signal--three" />
-              </div>
-              <div className="relative">
-                <div className="mb-10 flex items-start justify-between">
-                  <div className="method-core flex h-10 w-10 items-center justify-center rounded-2xl border border-border bg-background"><Sparkles className="h-4 w-4" /></div>
-                  <span className="rounded-full border border-border bg-background/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Контур метода</span>
-                </div>
-                <p className="max-w-sm text-2xl font-black leading-tight tracking-[-0.035em] text-foreground sm:text-3xl">Ситуация → гипотеза → проверка. Так методология ведёт к решению.</p>
-                <div className="method-flow mt-8 grid gap-3 border-t border-border pt-5 text-sm">
-                  <span className="method-flow-rail" aria-hidden="true" />
-                  {["Зафиксируете контекст и силы выбора", "Разложите путь на Job Chain", "Сначала проверите гипотезы — потом решите, что строить"].map((item, index) => (
-                    <div key={item} className="method-flow-step flex items-center gap-3 text-muted-foreground"><span className="font-mono text-xs text-foreground">0{index + 1}</span>{item}</div>
-                  ))}
-                </div>
-              </div>
-            </aside>
-          </div>
-        </section>
-
-        <section className="border-y border-border bg-card/35 px-4 py-16 sm:px-6">
-          <div className="mx-auto max-w-6xl">
-            <div className="max-w-2xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Знакомая картина?</p>
-              <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">Работы в бэклоге много. Контекста для выбора — мало.</h2>
-            </div>
-            <div className="mt-8 grid gap-3 md:grid-cols-3">
-              {[
-                { number: "01", title: "Фича вышла — привычка не изменилась", text: "Команда реализовала запрос, а пользователь всё равно выбирает знакомый обходной путь." },
-                { number: "02", title: "Интервью есть — контекста нет", text: "Люди рассказывают о желаниях, но в решении не видны триггер, ограничения и цена ошибки." },
-                { number: "03", title: "Таблица есть — ответа нет", text: "RICE помогает выбрать порядок, но не подсказывает, какую работу пользователя сначала стоит исследовать." },
-              ].map((item) => (
-                <article key={item.number} className="rounded-3xl border border-border bg-background p-6">
-                  <span className="font-mono text-xs text-muted-foreground">{item.number}</span>
-                  <h3 className="mt-8 text-xl font-black tracking-[-0.025em] text-foreground">{item.title}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.text}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="px-4 py-20 sm:px-6">
-          <div className="mx-auto max-w-6xl">
-            <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Как работает методология</p>
-                <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">От наблюдений о пользователе — к решению о продукте.</h2>
-                <p className="mt-5 text-base leading-relaxed text-muted-foreground">Методология помогает собрать доказательства, понять, где AI ускоряет работу, и сохранить обязательную проверку с реальными людьми.</p>
-                <button onClick={startReading} className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-foreground transition-colors hover:text-muted-foreground">
-                  Открыть первый шаг <ArrowRight className="h-4 w-4" />
-                </button>
-              </div>
-              <div className="grid gap-px overflow-hidden rounded-3xl border border-border bg-border sm:grid-cols-2">
-                {[
-                  { step: "01", title: "Сигналы вместо догадок", text: "Отделите наблюдения, цитаты и логи от интерпретаций команды." },
-                  { step: "02", title: "Контекст до решения", text: "Соберите Context Canvas и поймите, что происходит вокруг человека в момент выбора." },
-                  { step: "03", title: "Работа, а не интерфейс", text: "Сформулируйте Job Stories и Job Chain, не подменяя задачу готовой фичей." },
-                  { step: "04", title: "Приоритет после проверки", text: "Соберите подтверждения или опровержения гипотез — и только затем применяйте Opportunity Score, Kano или RICE." },
-                ].map((item) => (
-                  <article key={item.step} className="method-step-card bg-background p-6 sm:p-7">
-                    <span className="font-mono text-xs text-muted-foreground">{item.step}</span>
-                    <h3 className="mt-7 text-lg font-black tracking-[-0.025em] text-foreground">{item.title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.text}</p>
-                  </article>
+              <dl className="mt-8 divide-y divide-border border-y border-border">
+                {forces.map((force) => (
+                  <div key={force.name} className="grid grid-cols-[6rem_1fr] gap-4 py-3 text-sm">
+                    <dt className="font-semibold">{force.name}</dt>
+                    <dd className="text-muted-foreground">{force.text}</dd>
+                  </div>
                 ))}
-              </div>
+              </dl>
             </div>
           </div>
         </section>
 
-        <section id="method-example" className="scroll-mt-24 px-4 py-20 sm:px-6">
-          <div className="mx-auto max-w-6xl">
-            <div className="grid gap-8 lg:grid-cols-[0.62fr_1.38fr] lg:gap-16">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Методология в действии</p>
-                <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">Один сценарий — два артефакта для работы команды.</h2>
-                <p className="mt-5 text-base leading-relaxed text-muted-foreground">Посмотрите, как конкретный контекст превращается в Canvas и Job Chain — основу для дизайна и проверки с пользователями.</p>
-                <button onClick={() => navigate("/book")} className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-foreground transition-colors hover:text-muted-foreground">
-                  Перейти к шаблонам <ArrowRight className="h-4 w-4" />
-                </button>
-              </div>
-
-              <div className="overflow-hidden rounded-[2rem] border border-border bg-card">
-                <div className="flex flex-col gap-4 border-b border-border p-5 sm:p-6">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">{artifactCase.label}</p>
-                    <h3 className="mt-1 text-lg font-black tracking-[-0.025em] text-foreground">{artifactCase.title}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{artifactCase.description}</p>
-                  </div>
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex w-fit rounded-xl border border-border bg-background p-1" role="tablist" aria-label="Пример продуктового контекста">
-                      <button onClick={() => setActiveCase("b2c")} aria-pressed={activeCase === "b2c"} className={`rounded-lg px-3 py-2 text-xs font-bold transition-all ${activeCase === "b2c" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}>B2C · финтех</button>
-                      <button onClick={() => setActiveCase("b2b")} aria-pressed={activeCase === "b2b"} className={`rounded-lg px-3 py-2 text-xs font-bold transition-all ${activeCase === "b2b" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}>B2B · SaaS</button>
-                    </div>
-                    <div className="flex w-fit rounded-xl border border-border bg-background p-1" role="tablist" aria-label="Пример артефакта">
-                      <button onClick={() => setActiveArtifact("canvas")} aria-pressed={activeArtifact === "canvas"} className={`rounded-lg px-3 py-2 text-xs font-bold transition-all ${activeArtifact === "canvas" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}>Canvas</button>
-                      <button onClick={() => setActiveArtifact("chain")} aria-pressed={activeArtifact === "chain"} className={`rounded-lg px-3 py-2 text-xs font-bold transition-all ${activeArtifact === "chain" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}>Job Chain</button>
-                    </div>
-                  </div>
-                </div>
-
-                {activeArtifact === "canvas" ? (
-                  <div className="grid gap-px bg-border sm:grid-cols-2">
-                    {artifactCase.canvas.map((item, index) => (
-                      <article key={item.label} className={`min-h-32 bg-background p-5 sm:p-6 ${index === artifactCase.canvas.length - 1 ? "sm:col-span-2" : ""}`}>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
-                        <p className="mt-4 max-w-md text-base font-bold leading-snug tracking-[-0.02em] text-foreground">{item.value}</p>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="divide-y divide-border bg-background">
-                    {artifactCase.jobChain.map((item) => (
-                      <article key={item.step} className="grid gap-3 p-5 sm:grid-cols-[3.25rem_7.5rem_1fr] sm:items-center sm:gap-4 sm:p-6">
-                        <span className="font-mono text-xs text-muted-foreground">{item.step}</span>
-                        <span className={`w-fit rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${item.type === "Основная" ? "border-foreground/30 text-foreground" : "border-border text-muted-foreground"}`}>{item.type}</span>
-                        <div>
-                          <p className="font-bold tracking-[-0.02em] text-foreground">{item.label}</p>
-                          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Критерий успеха: {item.outcome}</p>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                )}
-                <div className="border-t border-border px-5 py-4 text-xs leading-relaxed text-muted-foreground sm:px-6">Это пример структуры, а не результат исследования. Любой вывод о пользователе остаётся гипотезой, пока его не проверят в интервью, наблюдениях или продуктовых данных. «Налоговая» — сопутствующая работа, необходимая для выполнения основной.</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="border-y border-border bg-card/35 px-4 py-20 sm:px-6">
-          <div className="mx-auto max-w-6xl">
-            <div className="grid gap-8 lg:grid-cols-[0.62fr_1.38fr] lg:gap-16">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Ваш контекст</p>
-                <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-foreground sm:text-4xl">Получите черновик Canvas и Job Chain по своему описанию.</h2>
-                <p className="mt-5 text-base leading-relaxed text-muted-foreground">Опишите реальную ситуацию. AI структурирует то, что вы сообщили, и предложит гипотезы для проверки — он не заменяет пользовательские данные.</p>
-                <div className="mt-7 rounded-2xl border border-border bg-background p-5 text-sm leading-relaxed text-muted-foreground">
-                  <p className="font-bold text-foreground">Чтобы черновик был полезнее, укажите</p>
-                  <p className="mt-2">Роль человека, момент запуска задачи, среду, желаемый результат, ограничение и текущий обходной путь.</p>
-                </div>
-              </div>
-
-              <div className="rounded-[2rem] border border-border bg-background p-5 sm:p-6">
-                <label htmlFor="custom-context" className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Ситуация пользователя</label>
-                <textarea
-                  id="custom-context"
-                  value={customContext}
-                  onChange={(event) => setCustomContext(event.target.value)}
-                  placeholder={CONTEXT_PROMPT}
-                  className="mt-3 min-h-44 w-full resize-y rounded-2xl border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
-                  maxLength={5000}
-                />
-                <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-xs text-muted-foreground">{customContext.length}/5000 · Минимум 30 символов</span>
-                  <div className="flex flex-wrap gap-2">
-                    <button onClick={() => setCustomContext(CONTEXT_PROMPT)} className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"><RotateCcw className="h-3.5 w-3.5" />Вставить шаблон с примером</button>
-                    <button onClick={generateArtifacts} disabled={customContext.trim().length < 30 || artifactGeneratorMutation.isPending} className="inline-flex items-center gap-1.5 rounded-xl bg-foreground px-3.5 py-2 text-xs font-bold text-background transition-all hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-35 active:scale-[0.98]">
-                      {artifactGeneratorMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <WandSparkles className="h-3.5 w-3.5" />}
-                      {artifactGeneratorMutation.isPending ? "Собираю черновик…" : "Подготовить черновик Canvas и Job Chain"}
-                    </button>
-                  </div>
-                </div>
-                {artifactGeneratorMutation.isError && <p className="mt-4 text-sm text-destructive">Не удалось собрать черновик. Уточните ситуацию и попробуйте ещё раз.</p>}
-              </div>
-            </div>
-
-            {generatedArtifacts && (
-              <div className="mt-8 overflow-hidden rounded-[2rem] border border-border bg-background">
-                <div className="flex flex-col gap-4 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Черновик исследования</p>
-                      <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Нужна валидация</span>
-                    </div>
-                    <h3 className="mt-1 text-xl font-black tracking-[-0.03em] text-foreground">{generatedArtifacts.title}</h3>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex w-fit rounded-xl border border-border bg-card p-1" role="tablist" aria-label="Сгенерированные артефакты">
-                      <button onClick={() => setGeneratedView("canvas")} aria-pressed={generatedView === "canvas"} className={`rounded-lg px-3 py-2 text-xs font-bold transition-all ${generatedView === "canvas" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}>Canvas</button>
-                      <button onClick={() => setGeneratedView("chain")} aria-pressed={generatedView === "chain"} className={`rounded-lg px-3 py-2 text-xs font-bold transition-all ${generatedView === "chain" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}>Job Chain</button>
-                    </div>
-                    <button onClick={copyGeneratedArtifacts} className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold text-foreground transition-colors hover:bg-accent"><Clipboard className="h-3.5 w-3.5" />{copied ? "Скопировано" : "Копировать"}</button>
-                  </div>
-                </div>
-
-                {generatedView === "canvas" ? (
-                  <div className="grid gap-px bg-border sm:grid-cols-2">
-                    {generatedArtifacts.contextCanvas.map((item, index) => (
-                      <article key={item.label} className={`min-h-32 bg-background p-5 sm:p-6 ${index === generatedArtifacts.contextCanvas.length - 1 ? "sm:col-span-2" : ""}`}>
-                        <div className="flex items-center justify-between gap-3"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p><span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${item.basis === "Гипотеза" ? "bg-accent text-muted-foreground" : "border border-border text-muted-foreground"}`}>{item.basis}</span></div>
-                        <p className="mt-4 max-w-xl text-base font-bold leading-snug tracking-[-0.02em] text-foreground">{item.value}</p>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="divide-y divide-border bg-background">
-                    {generatedArtifacts.jobChain.map((item) => (
-                      <article key={item.step} className="grid gap-3 p-5 sm:grid-cols-[3.25rem_7.5rem_1fr] sm:items-center sm:gap-4 sm:p-6">
-                        <span className="font-mono text-xs text-muted-foreground">{item.step}</span>
-                        <span className={`w-fit rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${item.type === "Основная" ? "border-foreground/30 text-foreground" : "border-border text-muted-foreground"}`}>{item.type}</span>
-                        <div><p className="font-bold tracking-[-0.02em] text-foreground">{item.label}</p><p className="mt-1 text-sm leading-relaxed text-muted-foreground">Критерий успеха: {item.outcome}</p></div>
-                      </article>
-                    ))}
-                  </div>
-                )}
-
-                <div className="grid gap-px border-t border-border bg-border lg:grid-cols-2">
-                  <div className="bg-card p-5 sm:p-6"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Ключевые гипотезы</p><ul className="mt-4 space-y-3 text-sm leading-relaxed text-foreground">{generatedArtifacts.hypotheses.map((item) => <li key={item} className="flex gap-2"><span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-foreground" />{item}</li>)}</ul></div>
-                  <div className="bg-card p-5 sm:p-6"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Что проверить</p><ul className="mt-4 space-y-3 text-sm leading-relaxed text-foreground">{generatedArtifacts.validationSteps.map((item) => <li key={item} className="flex gap-2"><span className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-foreground" />{item}</li>)}</ul></div>
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="px-4 pb-20 sm:px-6">
-          <div className="mx-auto grid max-w-6xl gap-6 rounded-[2rem] border border-border bg-card p-6 sm:p-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+        <section className="border-t border-border py-16">
+          <div className="grid gap-10 md:grid-cols-[1fr_1.4fr]">
+            <h2 className="display text-3xl sm:text-4xl">Лестница доказательств</h2>
             <div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border bg-background"><MessageSquare className="h-4 w-4" /></div>
-              <h2 className="mt-5 text-2xl font-black tracking-[-0.035em] text-foreground">Не знаете, с чего начать?</h2>
-              <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">Методический помощник объяснит подход и поможет сформулировать вопросы. Его ответы не являются пользовательскими данными и не подтверждают гипотезы.</p>
-              <button onClick={() => navigate("/chat")} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-foreground transition-colors hover:text-muted-foreground">
-                Открыть полный чат <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="min-w-0">
-              {messages.length === 0 ? (
-                <div className="mb-3 flex flex-wrap gap-2">
-                  {SUGGESTIONS.map((suggestion) => (
-                    <button key={suggestion} onClick={() => sendMessage(suggestion)} className="rounded-full border border-border bg-background px-3 py-1.5 text-left text-xs font-medium text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-[0.98]">{suggestion}</button>
-                  ))}
-                </div>
-              ) : (
-                <div className="mb-3 max-h-64 space-y-2 overflow-y-auto pr-1">
-                  {messages.map((message, index) => (
-                    <div key={`${message.role}-${index}`} className={message.role === "user" ? "ml-auto max-w-[90%] rounded-2xl rounded-br-sm bg-foreground px-4 py-2.5 text-sm text-background" : "max-w-[90%] rounded-2xl rounded-bl-sm border border-border bg-background px-4 py-2.5 text-sm leading-relaxed text-foreground"}>{message.text}</div>
-                  ))}
-                  {isLoading && <div className="flex w-fit items-center gap-2 rounded-2xl border border-border bg-background px-4 py-2.5 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" />Думаю…</div>}
-                  <div ref={messagesEndRef} />
-                </div>
-              )}
-              <div className="flex items-center gap-2 rounded-2xl border border-border bg-background px-4 py-3">
-                <input ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") sendMessage(input); }} placeholder="Спросите о методологии…" disabled={isLoading} className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-50" />
-                <button onClick={() => sendMessage(input)} disabled={!input.trim() || isLoading} aria-label="Отправить вопрос" className="rounded-xl bg-foreground p-2 text-background transition-all hover:opacity-80 disabled:opacity-30 active:scale-95"><Send className="h-3.5 w-3.5" /></button>
-              </div>
+              <p className="font-serif text-lg leading-relaxed" style={{ textWrap: "pretty" }}>
+                Синтетические нейроперсоны помогают формулировать гипотезы и вопросы. Выводом они становятся
+                только после проверки на живых людях.
+              </p>
+              <dl className="mt-8 divide-y divide-border border-y border-border">
+                {ladder.map((step) => (
+                  <div key={step.level} className="grid grid-cols-[6rem_1fr] gap-4 py-3 text-sm">
+                    <dt className="font-semibold tabular-nums">{step.level}</dt>
+                    <dd className="text-muted-foreground">{step.text}</dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           </div>
-        </section>
-
-        <section className="border-t border-border px-4 py-20 text-center sm:px-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Первый шаг — конкретный</p>
-          <h2 className="mx-auto mt-3 max-w-2xl text-4xl font-black leading-[0.95] tracking-[-0.05em] text-foreground sm:text-6xl">Выберите одну ситуацию пользователя и пройдите первый шаг методологии.</h2>
-          <button onClick={startReading} className={`${CTA_CLASS} mt-8`}>
-            <Compass className="h-4 w-4" />
-            {hasStarted ? "Продолжить с места остановки" : "Начать с первого шага"}
-            <ArrowRight className="h-4 w-4" />
-          </button>
         </section>
       </main>
 
-      <footer className="px-6 pb-8 text-center">
-        <p className="text-xs text-muted-foreground/60">Synthetic JTBD · Дмитрий Михайлов</p>
+      <footer className="mx-auto max-w-5xl border-t border-border px-6 py-8 text-sm text-muted-foreground">
+        Synthetic JTBD, Дмитрий Михайлов
       </footer>
     </div>
   );

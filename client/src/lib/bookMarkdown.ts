@@ -1,4 +1,5 @@
 import { defaultRehypePlugins, type StreamdownProps } from "streamdown";
+import { rehypeRussianTypography } from "./typography";
 
 /** Trusted book media only; retain Streamdown's other Markdown protections. */
 export function createBookMarkdownPlugins(origin: string): NonNullable<StreamdownProps["rehypePlugins"]> {
@@ -18,6 +19,7 @@ export function createBookMarkdownPlugins(origin: string): NonNullable<Streamdow
       allowDataImages: false,
     }],
     defaultRehypePlugins.raw,
+    rehypeRussianTypography,
     defaultRehypePlugins.katex,
   ];
 }
