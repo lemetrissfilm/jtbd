@@ -1,0 +1,136 @@
+name: Deploy to PS.kz
+
+# Сборка и выкладка jtbd.mikh.kz из main. Без секретов PSKZ_FTP_* выполняются только тесты и сборка.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "client/**"
+      - "shared/**"
+      - "server/book_content.md"
+      - "deploy/pskz/**"
+      - "scripts/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Только собрать и показать, что будет загружено (без выкладки)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-pskz
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ILLUSTRATION_NAME: job_chain_diagram_a891f841.png
+      SITE_URL: https://jtbd.mikh.kz
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Тесты и проверка типов
+        run: |
+          pnpm test
+          pnpm check
+
+      - name: Иллюстрация книги
+        run: |
+          # Предпочтительно хранить PNG в репозитории: deploy/pskz/media/$ILLUSTRATION_NAME.
+          # Если файла нет, берём тот, что сейчас опубликован на сайте.
+          mkdir -p "$RUNNER_TEMP/media"
+          SRC="deploy/pskz/media/$ILLUSTRATION_NAME"
+          if [ -f "$SRC" ]; then
+            cp "$SRC" "$RUNNER_TEMP/media/$ILLUSTRATION_NAME"
+          else
+            echo "::warning::В репозитории нет $SRC, скачиваю с $SITE_URL"
+            curl --fail --silent --show-error --location --max-time 60 \
+              -o "$RUNNER_TEMP/media/$ILLUSTRATION_NAME" "$SITE_URL/media/$ILLUSTRATION_NAME"
+          fi
+          head -c 8 "$RUNNER_TEMP/media/$ILLUSTRATION_NAME" | xxd -p | grep -qx '89504e470d0a1a0a' \
+            || { echo "::error::Файл иллюстрации не является PNG"; exit 1; }
+
+      - name: Сборка релиза
+        run: node scripts/build-pskz.mjs "$RUNNER_TEMP/release" "$RUNNER_TEMP/media/$ILLUSTRATION_NAME"
+
+      - name: Проверка секретов выкладки
+        id: secrets
+        env:
+          PSKZ_FTP_HOST: ${{ secrets.PSKZ_FTP_HOST }}
+          PSKZ_FTP_USER: ${{ secrets.PSKZ_FTP_USER }}
+          PSKZ_FTP_PASSWORD: ${{ secrets.PSKZ_FTP_PASSWORD }}
+          PSKZ_FTP_DIR: ${{ secrets.PSKZ_FTP_DIR }}
+        run: |
+          if [ -n "$PSKZ_FTP_HOST" ] && [ -n "$PSKZ_FTP_USER" ] && [ -n "$PSKZ_FTP_PASSWORD" ] && [ -n "$PSKZ_FTP_DIR" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Секреты PSKZ_FTP_* не заданы: сборка проверена, выкладка пропущена"
+          fi
+
+      - name: Установка lftp
+        if: steps.secrets.outputs.ready == 'true'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+
+      - name: Выкладка на PS.kz
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          FTP_HOST: ${{ secrets.PSKZ_FTP_HOST }}
+          FTP_USER: ${{ secrets.PSKZ_FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.PSKZ_FTP_PASSWORD }}
+          FTP_DIR: ${{ secrets.PSKZ_FTP_DIR }}
+          PROTOCOL: ${{ vars.PSKZ_PROTOCOL || 'ftp' }}
+          VERIFY_TLS: ${{ vars.PSKZ_VERIFY_TLS || 'yes' }}
+          DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
+        run: |
+          set -euo pipefail
+          # Защита от выкладки в корень или в чужой каталог.
+          case "$FTP_DIR" in ""|"/"|"."|"~"|"/httpdocs"|"httpdocs") echo "::error::PSKZ_FTP_DIR должен указывать на выделенный каталог сайта JTBD"; exit 1;; esac
+          # Все служебные каталоги Plesk остаются нетронутыми при --delete.
+          EXCLUDES='--exclude-glob .well-known/ --exclude-glob cgi-bin/ --exclude-glob error_docs/ --exclude-glob stat/ --exclude-glob .ftpquota'
+          FLAGS="--reverse --parallel=4 --verbose $EXCLUDES"
+          if [ "$DRY_RUN" = "true" ]; then FLAGS="$FLAGS --dry-run"; fi
+          lftp -e "
+            set cmd:fail-exit yes;
+            set net:max-retries 3;
+            set net:timeout 30;
+            set ftp:ssl-allow yes;
+            set ftp:ssl-force $([ "$PROTOCOL" = ftp ] && echo yes || echo no);
+            set ssl:verify-certificate $VERIFY_TLS;
+            open -u '$FTP_USER','$FTP_PASSWORD' $PROTOCOL://$FTP_HOST;
+            mirror $FLAGS --exclude-glob index.html --exclude-glob .htaccess '$RUNNER_TEMP/release' '$FTP_DIR';
+            mirror $FLAGS --delete '$RUNNER_TEMP/release' '$FTP_DIR';
+            bye
+          "
+
+      - name: Проверка опубликованной версии
+        if: steps.secrets.outputs.ready == 'true' && inputs.dry_run != true
+        run: |
+          EXPECTED=$(git rev-parse HEAD)
+          for i in 1 2 3 4 5 6; do
+            ACTUAL=$(curl --silent --max-time 20 "$SITE_URL/release.json" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("sourceCommit",""))' 2>/dev/null || true)
+            if [ "$ACTUAL" = "$EXPECTED" ]; then echo "На сайте версия $EXPECTED"; break; fi
+            [ "$i" = 6 ] && { echo "::error::На сайте версия '$ACTUAL', ожидалась $EXPECTED"; exit 1; }
+            sleep 10
+          done
+          for path in / /book /api/unknown; do
+            code=$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 20 "$SITE_URL$path")
+            echo "$path -> $code"
+          done
+          curl --silent --head --max-time 20 "$SITE_URL/gateway-lib.php" | head -1
