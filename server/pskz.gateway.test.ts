@@ -32,6 +32,9 @@ try {
         case 'rate':
             $result = pskz_rate_decision($input->timestamps, $input->calls, $input->now);
             break;
+        case 'clientIp':
+            $result = pskz_client_ip((array) $input->server);
+            break;
         case 'rateFile':
             pskz_rate_limit($input->directory, $input->ip, $input->calls, $input->now);
             $result = true;
@@ -217,5 +220,24 @@ describe("PS.kz PHP gateway load limits", () => {
   });
   it("holds at most three OS-owned concurrency slots and releases them", () => {
     expect(php({ action: "slots", directory }).value).toEqual({ blockedFourth: true, released: true });
+  });
+});
+
+describe("PS.kz PHP gateway client address behind Cloudflare", () => {
+  const ip = (server: Record<string, string>) => php({ action: "clientIp", server }).value;
+  it("uses the visitor address from CF-Connecting-IP when the peer is a Cloudflare address", () => {
+    expect(ip({ REMOTE_ADDR: "172.69.10.5", HTTP_CF_CONNECTING_IP: "203.0.113.7" })).toBe("203.0.113.7");
+    expect(ip({ REMOTE_ADDR: "2606:4700::6813:a970", HTTP_CF_CONNECTING_IP: "198.51.100.9" })).toBe("198.51.100.9");
+    expect(ip({ REMOTE_ADDR: "104.23.255.255", HTTP_CF_CONNECTING_IP: "2001:db8::1" })).toBe("2001:db8::1");
+  });
+  it("ignores a spoofed header from any non-Cloudflare peer", () => {
+    expect(ip({ REMOTE_ADDR: "203.0.113.50", HTTP_CF_CONNECTING_IP: "198.51.100.1" })).toBe("203.0.113.50");
+    expect(ip({ REMOTE_ADDR: "104.32.0.1", HTTP_CF_CONNECTING_IP: "198.51.100.1" })).toBe("104.32.0.1");
+    expect(ip({ REMOTE_ADDR: "127.0.0.1", HTTP_CF_CONNECTING_IP: "198.51.100.1" })).toBe("127.0.0.1");
+  });
+  it("falls back to the peer for a missing or invalid header and never reads X-Forwarded-For", () => {
+    expect(ip({ REMOTE_ADDR: "172.69.10.5" })).toBe("172.69.10.5");
+    expect(ip({ REMOTE_ADDR: "172.69.10.5", HTTP_CF_CONNECTING_IP: "not-an-ip" })).toBe("172.69.10.5");
+    expect(ip({ REMOTE_ADDR: "172.69.10.5", HTTP_X_FORWARDED_FOR: "198.51.100.1" })).toBe("172.69.10.5");
   });
 });

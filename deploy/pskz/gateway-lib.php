@@ -332,6 +332,57 @@ function pskz_rate_decision(array $timestamps, int $calls, int $now): array
     return ['allowed' => $allowed, 'timestamps' => $allowed ? array_merge($recent, array_fill(0, $calls, $now)) : $recent];
 }
 
+/** Published Cloudflare proxy ranges: https://www.cloudflare.com/ips-v4 and /ips-v6. Review if Cloudflare changes them. */
+const PSKZ_GATEWAY_CLOUDFLARE_RANGES = [
+    '173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22', '141.101.64.0/18',
+    '108.162.192.0/18', '190.93.240.0/20', '188.114.96.0/20', '197.234.240.0/22', '198.41.128.0/17',
+    '162.158.0.0/15', '104.16.0.0/13', '104.24.0.0/14', '172.64.0.0/13', '131.0.72.0/22',
+    '2400:cb00::/32', '2606:4700::/32', '2803:f800::/32', '2405:b500::/32', '2405:8100::/32',
+    '2a06:98c0::/29', '2c0f:f248::/32',
+];
+
+function pskz_ip_in_cidr(string $ip, string $cidr): bool
+{
+    [$network, $bits] = explode('/', $cidr, 2);
+    $address = @inet_pton($ip);
+    $base = @inet_pton($network);
+    if ($address === false || $base === false || strlen($address) !== strlen($base)) {
+        return false;
+    }
+    $bits = (int) $bits;
+    $whole = intdiv($bits, 8);
+    if ($whole > 0 && substr($address, 0, $whole) !== substr($base, 0, $whole)) {
+        return false;
+    }
+    $rest = $bits % 8;
+    if ($rest === 0) {
+        return true;
+    }
+    $mask = (0xFF << (8 - $rest)) & 0xFF;
+    return (ord($address[$whole]) & $mask) === (ord($base[$whole]) & $mask);
+}
+
+/**
+ * The visitor address for rate limiting. CF-Connecting-IP is trusted ONLY when the TCP peer
+ * (REMOTE_ADDR) is a published Cloudflare address; otherwise the header is attacker-controlled
+ * and ignored. X-Forwarded-For and Forwarded are never used.
+ */
+function pskz_client_ip(array $server): string
+{
+    $peer = (string) ($server['REMOTE_ADDR'] ?? '');
+    $header = (string) ($server['HTTP_CF_CONNECTING_IP'] ?? '');
+    if ($header === '' || filter_var($peer, FILTER_VALIDATE_IP) === false
+        || filter_var($header, FILTER_VALIDATE_IP) === false) {
+        return $peer;
+    }
+    foreach (PSKZ_GATEWAY_CLOUDFLARE_RANGES as $range) {
+        if (pskz_ip_in_cidr($peer, $range)) {
+            return $header;
+        }
+    }
+    return $peer;
+}
+
 /** Private state outside the document root, namespaced by this gateway root. */
 function pskz_state_directory(string $root): string
 {
@@ -345,7 +396,8 @@ function pskz_state_directory(string $root): string
 
 function pskz_rate_limit(string $directory, string $remoteAddress, int $calls, ?int $now = null): void
 {
-    // Never use X-Forwarded-For, Forwarded, cookies or authenticated identity.
+    // Never use X-Forwarded-For, Forwarded, cookies or authenticated identity. The caller passes
+    // pskz_client_ip(), which honours CF-Connecting-IP only from verified Cloudflare peers.
     if (filter_var($remoteAddress, FILTER_VALIDATE_IP) === false) {
         pskz_unavailable();
     }

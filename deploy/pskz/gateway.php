@@ -26,7 +26,7 @@ try {
     $request = pskz_validate_request($_SERVER, $raw);
     $context = ['batch' => $request['batch'], 'count' => $request['count']];
     $directory = pskz_state_directory(__DIR__);
-    pskz_rate_limit($directory, $_SERVER['REMOTE_ADDR'] ?? '', $request['count']);
+    pskz_rate_limit($directory, pskz_client_ip($_SERVER), $request['count']);
     $slot = pskz_acquire_slot($directory);
     @set_time_limit(110);
     $response = pskz_forward($request);
